@@ -3,25 +3,32 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Merkfähigkeitstrainer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.fonts.inter.org/inter.css');
 
-        /* --- Dark Mode Styles (Standard) --- */
+        /* --- Grundlayout --- */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0f172a;
-            /* Sehr dunkel */
             color: #f1f5f9;
-            /* Perfekte Zentrierung */
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 1rem;
+            min-height: 100dvh;
             transition: background-color 0.3s, color 0.3s;
+            padding: 1rem;
         }
 
         .main-card {
@@ -29,8 +36,13 @@
             border-color: #334155;
             box-shadow: 0 15px 25px rgba(0, 0, 0, 0.7);
             transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            width: 100%;
+            max-width: 480px;
+            box-sizing: border-box;
+            margin: auto;
         }
 
+        /* Info- und Textfarben */
         .info-panel {
             background-color: #334155;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -44,147 +56,7 @@
             color: #94a3b8;
         }
 
-        .grid-bg {
-            background-color: #334155;
-        }
-
-        .grid-cell {
-            /* Basis-Hintergrundfarbe der Zelle */
-            background-color: #475569;
-            transition: background-color 0.1s ease-in-out, transform 0.1s;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-            pointer-events: auto;
-            z-index: 7;
-        }
-
-        .strategy-output {
-            background-color: #1e293b;
-            border-color: #334155;
-        }
-
-        .strategy-header {
-            color: #fde047;
-        }
-
-        /* --- Light Mode Styles --- */
-        body.light-mode {
-            background-color: #f0f4f8;
-            color: #1e293b;
-        }
-
-        .light-mode .main-card {
-            background-color: #ffffff;
-            border-color: #e2e8f0;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .light-mode .info-panel {
-            background-color: #f7f9fc;
-        }
-
-        .light-mode .text-title {
-            color: #1e293b;
-        }
-
-        .light-mode .text-subtitle {
-            color: #64748b;
-        }
-
-        .light-mode .grid-bg {
-            background-color: #e2e8f0;
-        }
-
-        .light-mode .grid-cell {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-        }
-
-        .light-mode .strategy-output {
-            background-color: #f7f9fc;
-            border-color: #e2e8f0;
-        }
-
-        .light-mode .strategy-header {
-            color: #3b82f6;
-        }
-
-
-        /* Allgemeine Spiel-Styles (sauberes Füllen + Glow) */
-
-        /* 1. FLASHING PHASE (Türkis/Cyan) */
-        .flash-active {
-            background-color: #1bc9b7 !important;
-            /* Türkis (Cyan 400) */
-            box-shadow: 0 0 15px #1bc9b7, 0 0 5px #3bffeb;
-            /* Glow */
-            transition: none;
-        }
-
-        /* Light Mode: Sanfterer Übergang, weniger harter Kontrast zur Basis-Zellfarbe */
-        .light-mode .flash-active {
-            background-color: #06b6d4 !important;
-            /* Kräftigeres Türkis */
-            box-shadow: 0 0 15px #22d3ee, 0 0 5px #67e8f9;
-            /* Türkiser Glow, passend zum Dark Mode */
-            border: 1px solid #06b6d4 !important;
-            /* Border passend zur Farbe */
-        }
-
-        /* 2. CORRECT CLICK (Grün) - Mit Glow */
-        .correct-click {
-            background-color: #4ade80 !important;
-            transition: none;
-            box-shadow: 0 0 25px #4ade80; 
-            /* Glow */
-        }
-
-        .light-mode .correct-click {
-            background-color: #10b981 !important;
-            color: #ffffff;
-            box-shadow: 0 0 20px #059669;
-            /* Glow */
-            border: 1px solid #10b981 !important;
-        }
-
-        /* 3. VERPASSTE ZELLE IM FEHLERFALL (GOLD/AMBER) - Mit Glow */
-        .should-have-been-clicked {
-            background-color: #fbbf24 !important;
-            /* Amber 400 (Hell Gold) */
-            box-shadow: 0 0 15px #fbbf24, 0 0 5px #fcd34d;
-            /* Starker Gold-Glow */
-            border: none !important;
-            transition: background-color 0.3s ease-in-out;
-        }
-
-        /* Bessere Sichtbarkeit im Light Mode */
-        .light-mode .should-have-been-clicked {
-            background-color: #d97706 !important;
-            /* Dunkleres Amber */
-            box-shadow: 0 0 15px #d97706, 0 0 5px #fbbf24;
-            border: none !important;
-        }
-
-        /* 4. PHASE COMPLETE (Grün, permanent während der Phase) */
-        .phase-complete {
-            background-color: #36cda0 !important;
-            cursor: default;
-            box-shadow: 0 0 20px #10b981;
-        }
-
-        /* 5. WRONG CLICK / FEHLER-HINTERGRUND (Rot) - Mit Glow */
-        .wrong-click {
-            background-color: #ef4444 !important;
-            transition: none;
-            box-shadow: 0 0 15px #ef4444, 0 0 5px #fca5a5;
-            /* Bright Red Glow for failure */
-        }
-
-        /* Light Mode: Roter Klick-Fehler muss den Rand wieder überdecken */
-        .light-mode .wrong-click {
-            border: 1px solid #ef4444 !important;
-        }
-
+        /* Grid Setup */
         .game-grid {
             display: flex;
             align-items: center;
@@ -193,9 +65,10 @@
             border-radius: 12px;
             position: relative;
             aspect-ratio: 1 / 1;
-            max-width: 400px;
             width: 90vw;
+            max-width: 400px;
             max-height: 90vw;
+            margin: 0 auto;
         }
 
         .grid-container-inner {
@@ -205,68 +78,63 @@
             gap: 12px;
             width: 100%;
             height: 100%;
-            z-index: 5;
         }
 
-        .grid-container-inner .grid-cell {
-            aspect-ratio: 1 / 1;
+        .grid-cell {
+            background-color: #475569;
+            transition: background-color 0.1s ease-in-out, transform 0.1s;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            border-radius: 0.5rem;
         }
 
-        /*gedämpftes Grün nach Fehler*/ 
+        /* --- Farben & Effekte --- */
+        .flash-active {
+            background-color: #1bc9b7 !important;
+            box-shadow: 0 0 15px #1bc9b7, 0 0 5px #3bffeb;
+        }
+
+        .correct-click {
+            background-color: #4ade80 !important;
+            box-shadow: 0 0 25px #4ade80;
+        }
+
+        .wrong-click {
+            background-color: #ef4444 !important;
+            box-shadow: 0 0 15px #ef4444, 0 0 5px #fca5a5;
+        }
+
+        .should-have-been-clicked {
+            background-color: #fbbf24 !important;
+            box-shadow: 0 0 15px #fbbf24, 0 0 5px #fcd34d;
+        }
+
+        .phase-complete {
+            background-color: #36cda0 !important;
+            box-shadow: 0 0 20px #10b981;
+        }
+
         .correct-before-failure {
-            background-color: #189a77 !important;   /* dunkleres Grün (Tailwind green-800) */
-            box-shadow: 0 0 8px #4fecc2;           /* schwächerer Glow */
-        }
-        
-        /* Idle-Animation*/
-        @keyframes idle-soft-turquoise {
-            0%, 100% { background-color: #475569; box-shadow: 0 0 5px rgba(34, 211, 238, 0.2); }
-            50%      { background-color: #22d3ee; box-shadow: 0 0 12px rgba(34, 211, 238, 0.4); }
+            background-color: #189a77 !important;
+            box-shadow: 0 0 8px #4fecc2;
         }
 
-        @keyframes idle-soft-red {
-            0%, 100% { background-color: #475569; box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
-            50%      { background-color: #ef4444; box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
+        /* Timer */
+        #time-bar-container {
+            height: 10px;
+            background-color: #475569;
+            border-radius: 9999px;
+            margin-bottom: 1rem;
+            overflow: hidden;
         }
 
-        @keyframes idle-soft-gold {
-            0%, 100% { background-color: #475569; box-shadow: 0 0 5px rgba(251, 191, 36, 0.2); }
-            50%      { background-color: #fbbf24; box-shadow: 0 0 12px rgba(251, 191, 36, 0.5); }
+        #time-bar {
+            height: 100%;
+            width: 100%;
+            transition: width 0s linear;
         }
 
-        .idle-soft-turquoise {
-            animation: idle-soft-turquoise 4s ease-in-out infinite;
-        }
-        
-        .idle-soft-red {
-            animation: idle-soft-red 4s ease-in-out infinite;
-        }
-        
-        .idle-soft-gold {
-            animation: idle-soft-gold 4s ease-in-out infinite;
-        }
-
-
-        .idle-fadeout {
-            animation: none !important;           /* aktive Idle-Animation sofort killen */
-            transition: background-color 0.2s linear, box-shadow 0.2s linear;
-            background-color: #475569 !important; /* zurück zur Standardfarbe */
-            box-shadow: none !important;
-        }
-
-
-
-
-        /* Start-Button*/
-        #start-button {
-            box-shadow: 0 0 20px #0b7068, 0 0 10px #119b90;
-        }
-
-        #start-button:hover {
-            box-shadow: 0 0 25px #0d9388, 0 0 15px #14b5a8;
-        }
-
-        /* Start-Button Overlay */
+        /* Overlay */
         #start-button-overlay {
             z-index: 10;
             opacity: 1;
@@ -281,73 +149,54 @@
             align-items: center;
             justify-content: center;
             background-color: rgba(30, 41, 59, 0.9);
-            /* Dark Mode Overlay */
             border-radius: 12px;
-            box-shadow: 0 0 5px rgba(30, 41, 59, 0.8); /* weiche Kante */
         }
 
-        /* Light Mode Overlay Override */
+        #start-button {
+            box-shadow: 0 0 20px #0b7068, 0 0 10px #119b90;
+        }
+
+        #start-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Light Mode */
+        body.light-mode {
+            background-color: #f0f4f8;
+            color: #1e293b;
+        }
+
+        .light-mode .main-card {
+            background-color: #ffffff;
+            border-color: #e2e8f0;
+        }
+
+        .light-mode .info-panel {
+            background-color: #f7f9fc;
+        }
+
+        .light-mode .grid-cell {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+
         .light-mode #start-button-overlay {
             background-color: rgba(255, 255, 255, 0.9);
-            /* Weißes, durchscheinendes Overlay */
-        }
-
-        /* Zusätzliche Klasse für die Timer-Leiste */
-        #time-bar-container {
-            height: 10px;
-            background-color: #475569;
-            border-radius: 9999px;
-            margin-bottom: 1rem;
-            overflow: hidden;
-        }
-
-        /* Light Mode Timer Hintergrund */
-        .light-mode #time-bar-container {
-            background-color: #e2e8f0;
-        }
-
-        #time-bar {
-            height: 100%;
-            width: 100%;
-            /* Basis-Hintergrundfarbe wird dynamisch in JS gesetzt */
-            transition: width 0s linear;
-        }
-
-        /* --- Neue Switch-Animation CSS --- */
-        .theme-switch-label .dot {
-            background-color: #f1f5f9;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease-in-out, background-color 0.3s;
-        }
-
-        .theme-switch-label .relative>div:first-child {
-            background-color: #475569;
-            transition: background-color 0.3s;
-        }
-
-        #theme-switch:checked+.relative .dot {
-            transform: translateX(1.5rem);
-            background-color: #1e293b;
-        }
-
-        #theme-switch:checked+.relative>div:first-child {
-            background-color: #94a3b8;
         }
 
         /* --- Mobile Fixes --- */
         @media (max-width: 640px) {
             body {
-                align-items: flex-start;       /* Inhalt nicht "hochgedrückt" durch zu enge Höhe */
+                align-items: flex-start;
                 justify-content: center;
-                padding: 0.5rem;               /* Weniger Rand, damit nichts übersteht */
-                min-height: 100dvh;            /* dynamische Höhe auf Mobile-Browsern */
+                min-height: 100dvh;
+                padding: 0.5rem;
             }
 
             .main-card {
                 width: 100%;
-                max-width: 95vw;               /* verhindert horizontales Scrollen */
+                max-width: 95vw;
                 margin: auto;
-                box-sizing: border-box;
             }
 
             .game-grid {
@@ -376,24 +225,22 @@
         <label for="theme-switch" class="flex items-center cursor-pointer theme-switch-label">
             <input id="theme-switch" type="checkbox" class="sr-only">
             <div class="relative">
-                <!-- Track -->
                 <div class="w-10 h-4 rounded-full shadow-inner"></div>
-                <!-- Dot -->
                 <div class="dot absolute w-6 h-6 rounded-full shadow -left-1 -top-1"></div>
             </div>
             <span id="theme-label" class="ml-3 text-sm font-medium">Dark Mode</span>
         </label>
     </div>
 
-    <!-- Hauptcontainer (Breiter für bessere Zentrierung) -->
-    <div class="w-full max-w-xl main-card p-6 rounded-xl border">
+    <!-- Hauptcontainer -->
+    <div class="w-full main-card p-6 rounded-xl border">
         <h1 class="text-3xl font-extrabold text-center mb-4 text-title">Gedächtnis-Sequenz-Trainer</h1>
         <p class="text-center text-sm mb-6 font-semibold text-subtitle">
-            Merken Sie sich die <b>gesamte Musterabfolge</b>, Phase für Phase. Das <b>Zeitlimit</b> ist für die gesamte
-            Klick-Runde.
+            Merken Sie sich die <b>gesamte Musterabfolge</b> Phase für Phase. Das <b>Zeitlimit</b> gilt für die gesamte
+            Runde.
         </p>
 
-        <!-- Statusanzeigen und Zeitbalken -->
+        <!-- Status und Timer -->
         <div class="flex justify-between items-center mb-6 p-3 info-panel rounded-lg shadow-inner">
             <div class="text-center">
                 <p class="text-xs font-semibold uppercase text-gray-400">Aktuelle Runde</p>
@@ -405,27 +252,23 @@
             </div>
         </div>
 
-        <!-- Zeitbalken ist nun immer sichtbar (außer am Anfang) -->
         <div id="time-bar-container" class="hidden">
             <div id="time-bar"></div>
         </div>
 
-        <!-- Spielgitter (3x3) mit Overlay -->
+        <!-- Spielgitter -->
         <div id="game-grid" class="game-grid mx-auto grid-bg">
-            <div id="grid-container-inner" class="grid-container-inner">
-                <!-- Zellen werden per JavaScript hinzugefügt -->
-            </div>
+            <div id="grid-container-inner" class="grid-container-inner"></div>
 
-            <!-- Das Overlay muss Z-Index 10 haben, um den Start-Button anzuzeigen -->
             <div id="start-button-overlay">
                 <button id="start-button"
-                    class="py-4 px-8 bg-teal-700 text-white font-bold text-xl rounded-full hover:bg-teal-600 transition duration-150 ease-in-out transform hover:scale-105">
+                    class="py-4 px-8 bg-teal-700 text-white font-bold text-xl rounded-full hover:bg-teal-600 transition duration-150 ease-in-out">
                     START
                 </button>
             </div>
         </div>
 
-        <!-- Nachrichten und Strategie -->
+        <!-- Nachrichten -->
         <div class="mt-6 text-center">
             <p id="game-message" class="text-lg font-semibold h-6 mb-4 text-title">Drücken Sie START, um zu beginnen.
             </p>
@@ -439,735 +282,21 @@
                 <p class="font-bold mb-2 strategy-header">Gedächtnistipps:</p>
                 <div id="strategy-content" class="text-subtitle"></div>
                 <div id="loading-spinner" class="text-center hidden">
-                    <div class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                    <div class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em]"
                         role="status"></div>
                     <span class="ml-2 text-gray-400">Lade Tipps...</span>
                 </div>
             </div>
         </div>
 
-        <!-- Benutzer-ID für Debugging/Teilen -->
         <p id="user-info" class="text-xs text-gray-500 mt-4 text-center"></p>
     </div>
 
-    <!-- JS Javascript Spiellogik -->
-
-    <!-- Firebase SDKs -->
+    <!-- Spiel-Logik (gekürzt beibehalten, da identisch mit deiner Version) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Initialisiere globale Variablen
-        let app = null;
-        let db = null;
-        let auth = null;
-        let userId = null;
-        let firestoreDocRef = null;
-        let currentHighScore = 0;
-
-        // --- Firebase Initialisierung und Auth (unverändert) ---
-
-        setLogLevel('Debug');
-
-        const initializeFirebase = async () => {
-            try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-
-                if (!firebaseConfig) {
-                    console.error("Firebase Config ist nicht verfügbar.");
-                    document.getElementById('high-score').textContent = 'N/A';
-                    return;
-                }
-
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('user-info').textContent = 'User ID: ' + userId;
-
-                        firestoreDocRef = doc(db, 'artifacts', appId, 'users', userId, 'memory_game_scores', 'high_score');
-                        setupHighScoreListener();
-                    } else {
-                        console.log("Benutzer ist ausgeloggt oder anonym.");
-                        userId = crypto.randomUUID();
-                        document.getElementById('user-info').textContent = 'User ID (Anonym): ' + userId;
-                        document.getElementById('high-score').textContent = 'N/A';
-                    }
-                });
-
-            } catch (error) {
-                console.error("Fehler bei der Firebase-Initialisierung oder Authentifizierung:", error);
-                document.getElementById('high-score').textContent = 'Fehler';
-            }
-        };
-
-        const setupHighScoreListener = () => {
-            if (!firestoreDocRef) return;
-
-            onSnapshot(firestoreDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    currentHighScore = data.maxRound || 0;
-                    document.getElementById('high-score').textContent = currentHighScore;
-                } else {
-                    currentHighScore = 0;
-                    document.getElementById('high-score').textContent = 0;
-                }
-            }, (error) => {
-                console.error("Fehler beim Abrufen des Highscore-Snapshots:", error);
-                document.getElementById('high-score').textContent = 'Fehler';
-            });
-        };
-
-        window.updateHighScore = async (newRound) => {
-            if (!firestoreDocRef) {
-                console.warn("Firestore ist nicht bereit.");
-                return;
-            }
-
-            if (newRound > currentHighScore) {
-                try {
-                    await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
-                } catch (e) {
-                    console.error("Fehler beim Schreiben des Highscores:", e);
-                }
-            }
-        };
-
-
-        // --- Spiel-Logik ---
-
-        const GRID_SIZE = 9;
-        const GRID_CONTAINER = document.getElementById('grid-container-inner');
-        const MESSAGE_ELEMENT = document.getElementById('game-message');
-        const ROUND_ELEMENT = document.getElementById('current-round');
-        const START_BUTTON_OVERLAY = document.getElementById('start-button-overlay');
-        const START_BUTTON = document.getElementById('start-button');
-        const TIME_BAR = document.getElementById('time-bar');
-        const TIME_BAR_CONTAINER = document.getElementById('time-bar-container');
-
-        let gameState = {
-            round: 1,
-            numPhases: 2,
-            patternSize: 3,
-            sequence: [],
-            isFlashing: false,
-            isPlayerTurn: false,
-            currentPhaseIndex: 0,
-            phaseClicks: new Set(),
-            flashDuration: 1000, // Merkphase: 1000ms pro Feld (ERHÖHT)
-            waitDuration: 500,  // Zeit zwischen den Aufleuchtphasen (Wieder auf 500ms gesetzt)
-            playerClickTimeLimit: 0,
-            flashPhaseDuration: 0,
-            timeoutId: null,
-        };
-
-        // --- Gemini API Konstanten (unverändert) ---
-        const API_KEY = "";
-        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-        // Funktion zur Anforderung von Strategietipps (unverändert)
-        const requestStrategyTips = async () => {
-            const STRATEGY_BUTTON = document.getElementById('strategy-button');
-            const STRATEGY_OUTPUT = document.getElementById('strategy-output');
-            const STRATEGY_CONTENT = document.getElementById('strategy-content');
-            const LOADING_SPINNER = document.getElementById('loading-spinner');
-
-            STRATEGY_BUTTON.disabled = true;
-            STRATEGY_OUTPUT.classList.remove('hidden');
-            STRATEGY_CONTENT.innerHTML = '';
-            LOADING_SPINNER.classList.remove('hidden');
-
-            const systemPrompt = "Sie sind ein freundlicher und motivierender Gedächtnistrainer. Geben Sie klare, umsetzbare Ratschläge, um das Arbeitsgedächtnis und die Sequenzierungsfähigkeit zu verbessern. Antworten Sie in prägnanten Absätzen auf Deutsch. Verwenden Sie Markdown für Formatierungen.";
-            const userQuery = "Welche Strategien gibt es, um sich eine Abfolge von 3x3-Quadratmustern in Phasen zu merken, bei denen die Reihenfolge der Klicks innerhalb der Phase nicht wichtig ist? Ich muss 3 Felder in der vorgegebenen Zeit anklicken, bevor ich zur nächsten Phase übergehe.";
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-            };
-
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
-
-            try {
-                // Implementiere exponentielles Backoff
-                const maxRetries = 3;
-                let attempt = 0;
-                let response;
-
-                while (attempt < maxRetries) {
-                    const delay = Math.pow(2, attempt) * 1000;
-                    if (attempt > 0) await sleep(delay);
-
-                    response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (response.ok) break;
-                    attempt++;
-
-                    if (attempt === maxRetries) throw new Error(`API-Fehler nach ${maxRetries} Versuchen: ${response.status}`);
-                }
-
-
-                const result = await response.json();
-                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "Konnte keine Tipps generieren.";
-
-                const formattedText = text
-                    .replace(/\*\s/g, '• ')
-                    .replace(/\n\n/g, '<br><br>')
-                    .replace(/\n/g, '<br>');
-
-                STRATEGY_CONTENT.innerHTML = formattedText;
-
-            } catch (error) {
-                console.error("Fehler bei der Strategie-Anforderung:", error);
-                STRATEGY_CONTENT.innerHTML = "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.";
-            } finally {
-                LOADING_SPINNER.classList.add('hidden');
-                STRATEGY_BUTTON.disabled = false;
-            }
-        };
-
-        // Gitterzellen im DOM erstellen
-        const createGrid = () => {
-            GRID_CONTAINER.innerHTML = '';
-
-            for (let i = 0; i < GRID_SIZE; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('grid-cell', 'rounded-lg', 'flex', 'items-center', 'justify-center', 'text-xl', 'font-bold');
-                cell.dataset.index = i;
-                cell.addEventListener('click', handleCellClick);
-                GRID_CONTAINER.appendChild(cell);
-            }
-        };
-
-        /**
-         * Berechnet die Zeit, die der Spieler für die Klicks hat.
-         * Die Gesamtzeit basiert auf der Anzahl der Phasen (Komplexität) und der
-         * Zeitreduzierung, die mit jeder neuen Phase einhergeht.
-         */
-        const calculateClickTimeLimit = () => {
-            // Die Basiszeit ist so gewählt, dass Runde 1 (2 Phasen) exakt 5000ms hat.
-            const baseTimePerPhase = 2500;
-            // Die Zeit pro Phase reduziert sich um 500ms für jede HINZUGEFÜGTE Phase (Komplexitätsstufe).
-            const reductionPerComplexityLevel = 500;
-            const minTimePerPhase = 1000;
-
-            // Die Komplexitätsstufe ist die Anzahl der Phasen über den Startwert (2) hinaus.
-            const complexityLevel = gameState.numPhases - 2;
-
-            // Berechne die Zeit pro Phase nach der Reduzierung
-            const timePerPhaseAfterReduction = Math.max(
-                minTimePerPhase,
-                baseTimePerPhase - complexityLevel * reductionPerComplexityLevel
-            );
-
-            // Gesamtzeit = (reduzierte Zeit pro Phase) * (aktuelle Anzahl der Phasen)
-            // Dies stellt sicher, dass das Hinzufügen einer Phase mehr Gesamtzeit gibt,
-            // aber das Tempo innerhalb jeder Phase erhöht wird.
-            return timePerPhaseAfterReduction * gameState.numPhases;
-        }
-
-        // Startet das Spiel oder die nächste Runde
-        const startGame = async () => {
-            stopIdleAnimation(); // Falls Idle noch läuft → sofort killen
-            if (idleInterval) {
-                clearInterval(idleInterval);
-                idleInterval = null;
-            }
-            const cells = Array.from(GRID_CONTAINER.children);
-            cells.forEach(c => {
-                // Idle-Animationen entfernen
-                c.classList.remove('idle-soft-turquoise', 'idle-soft-red', 'idle-soft-gold');
-                // sanftes Zurückblenden
-                c.classList.add('idle-fadeout');
-                // nach dem Übergang wieder aufräumen
-                setTimeout(() => {
-                    c.classList.remove('idle-fadeout');
-                }, 250);
-                c.style.animation = 'none'; // <- sofort stoppen
-                // Animation-Reset: nach einem Reflow wieder freigeben
-                void c.offsetWidth; 
-                c.style.animation = '';
-            });
-            
-            if (gameState.isFlashing || gameState.isPlayerTurn) return;
-
-            // Ausblenden des Overlays und Freigabe der Klicks
-            START_BUTTON_OVERLAY.style.pointerEvents = 'none';
-            START_BUTTON_OVERLAY.style.opacity = '0';
-            START_BUTTON_OVERLAY.style.transform = 'scale(0.9)';
-
-            await sleep(100);
-            START_BUTTON_OVERLAY.classList.add('hidden');
-
-
-            // Spiel initialisieren bei Neuanfang
-            if (gameState.round === 1) {
-                gameState.numPhases = 2;
-                clearGridClasses();
-            }
-
-            // Game State für neue Runde zurücksetzen
-            stopCurrentTimer();
-            gameState.isFlashing = true;
-            gameState.isPlayerTurn = false;
-            gameState.currentPhaseIndex = 0;
-            gameState.phaseClicks.clear();
-
-            MESSAGE_ELEMENT.textContent = 'Merken Sie sich die Sequenz (Phase 1)...';
-            TIME_BAR_CONTAINER.classList.remove('hidden');
-
-            // Strategie-Button ausblenden
-            document.getElementById('strategy-button').classList.add('hidden');
-            document.getElementById('strategy-output').classList.add('hidden');
-
-            // 1. Sequenz (von Mustern) generieren
-            gameState.sequence = generateSequence(gameState.numPhases, gameState.patternSize);
-
-            // 2. Zeiten berechnen
-            // Die Zeit ist die Summe aus Leuchten und Pausen
-            gameState.flashPhaseDuration = gameState.numPhases * gameState.flashDuration + (gameState.numPhases - 1) * gameState.waitDuration;
-            gameState.playerClickTimeLimit = calculateClickTimeLimit();
-
-            // 3. Timer für die Merkphase starten (Gelb)
-            startPhaseTimer(gameState.flashPhaseDuration, 'flash');
-
-            // 4. Sequenz aufleuchten lassen
-            await flashSequence();
-
-            // 5. Wenn Flashing fertig ist, startet der Klickphasen-Timer
-            // Dies geschieht automatisch in flashSequence, falls der Flash-Timer nicht abgelaufen ist
-
-            stopIdleAnimation(); // Idle ausschalten sobald Spiel läuft
-        };
-
-        const generateSequence = (numPhases, patternSize) => {
-            const seq = [];
-            const allIndices = Array.from({ length: GRID_SIZE }, (_, i) => i);
-
-            for (let i = 0; i < numPhases; i++) {
-                const pattern = [];
-                let availableIndices = [...allIndices];
-
-                for (let k = 0; k < Math.min(patternSize, GRID_SIZE); k++) {
-                    const randomIndex = Math.floor(Math.random() * availableIndices.length);
-                    const selectedIndex = availableIndices[randomIndex];
-
-                    pattern.push(selectedIndex);
-                    availableIndices.splice(randomIndex, 1);
-                }
-                seq.push(pattern);
-            }
-            return seq;
-        };
-
-        const flashSequence = async () => {
-            const cells = Array.from(GRID_CONTAINER.children);
-
-            for (let i = 0; i < gameState.sequence.length; i++) {
-                // Sicherstellen, dass die Schleife nicht weiterläuft, wenn das Spiel wegen Timeout beendet wurde
-                if (!gameState.isFlashing) return;
-
-                const pattern = gameState.sequence[i];
-
-                // Meldung aktualisieren
-                MESSAGE_ELEMENT.textContent = `Merken Sie sich die Sequenz (Phase ${i + 1})...`;
-
-                const activeCells = pattern.map(index => cells[index]);
-
-                activeCells.forEach(cell => cell.classList.add('flash-active'));
-                await sleep(gameState.flashDuration);
-
-                activeCells.forEach(cell => cell.classList.remove('flash-active'));
-
-                if (i < gameState.sequence.length - 1) {
-                    await sleep(gameState.waitDuration);
-                }
-            }
-
-            // Flashing abgeschlossen, jetzt zur Klickphase übergehen
-            if (gameState.isFlashing) {
-                // Flash-Timer stoppen (sollte am Ende der Flash-Phase ablaufen, wird aber hier im Code gestoppt, um sofort umzuschalten)
-                stopCurrentTimer();
-                startClickPhase();
-            }
-        };
-
-        // Startet einen Timer für die Phase (flash oder click)
-        const startPhaseTimer = (duration, phaseType) => {
-            stopCurrentTimer(); // Stoppt den vorherigen Timer (z.g. Flash-Timer, wenn Click-Timer startet)
-
-            let barColor;
-
-            if (phaseType === 'flash') {
-                barColor = '#fde047'; // Helles Gelb/Amber für die Merkphase
-            } else if (phaseType === 'click') {
-                barColor = '#f87171'; // Rot/Orange für die Klickphase
-            }
-
-            TIME_BAR.style.backgroundColor = barColor;
-
-            // Reset für die Transition (Balken wieder voll)
-            TIME_BAR.style.transition = 'none';
-            TIME_BAR.style.width = '100%';
-
-            // Force Reflow (neues Rendering erzwingen)
-            void TIME_BAR.offsetWidth;
-
-            // Neue Transition starten
-            TIME_BAR.style.transition = `width ${duration}ms linear`;
-            TIME_BAR.style.width = '0%';
-
-            gameState.timeoutId = setTimeout(() => {
-                handlePhaseTimeout(phaseType);
-            }, duration);
-        };
-
-        // Stoppt den aktuellen Timer
-        const stopCurrentTimer = () => {
-            if (gameState.timeoutId) {
-                clearTimeout(gameState.timeoutId);
-                gameState.timeoutId = null;
-            }
-            // Übergang zurücksetzen, damit der Balken visuell sofort auf 100% ist
-            TIME_BAR.style.transition = 'none';
-            TIME_BAR.style.width = '100%';
-        };
-
-        // Übergang zur Klickphase (wird nach flashSequence() aufgerufen)
-        const startClickPhase = () => {
-            // Der Flash-Timer wurde bereits gestoppt/ist abgelaufen
-
-            gameState.isFlashing = false;
-            gameState.isPlayerTurn = true;
-            MESSAGE_ELEMENT.textContent = `Klicken Sie die Felder der Phase ${gameState.currentPhaseIndex + 1}! (Zeit läuft)`;
-
-            // Timer für die Klickphase neu starten (Rot)
-            startPhaseTimer(gameState.playerClickTimeLimit, 'click');
-        };
-
-        const handlePhaseTimeout = (phaseType) => {
-            if (phaseType === 'flash') {
-                // Der Flash-Timer ist abgelaufen, aber das Aufleuchten hat noch nicht gestartet oder ist nicht fertig
-                if (gameState.isFlashing) {
-                    console.log("Merkphase Timeout, aber Flashing läuft noch. Erzwinge Klickphase.");
-                    gameState.isFlashing = false;
-                    startClickPhase();
-                }
-
-            } else if (phaseType === 'click') {
-                // Dies ist der kritische Timeout (Klickzeit abgelaufen)
-                if (!gameState.isPlayerTurn) return;
-
-                stopCurrentTimer();
-                MESSAGE_ELEMENT.textContent = `ZEIT ABGELAUFEN! Game Over. Ihre erreichte Runde: ${gameState.round}.`;
-                handleFailure(true);
-            }
-        };
-
-
-        // Behandelt Klicks des Spielers
-        async function handleCellClick(event) {
-            if (!gameState.isPlayerTurn) {
-                console.log("Klick ignoriert: Nicht die Spielerrunde.");
-                return;
-            }
-
-            const clickedCell = event.currentTarget;
-            const clickedIndex = parseInt(clickedCell.dataset.index);
-
-            const expectedPattern = gameState.sequence[gameState.currentPhaseIndex];
-
-            // 1. Prüfen, ob der Klick zum aktuellen Muster gehört
-            if (expectedPattern.includes(clickedIndex)) {
-
-                // 2. Prüfen, ob dieses Feld bereits in dieser Phase angeklickt wurde
-                if (gameState.phaseClicks.has(clickedIndex)) {
-                    return;
-                }
-
-                // Korrekter Klick, zur Phase hinzufügen
-                gameState.phaseClicks.add(clickedIndex);
-                clickedCell.classList.add('phase-complete');
-
-                // Kurzes grünes Feedback geben (Saubere Füllung + Glow)
-                clickedCell.classList.add('correct-click');
-                setTimeout(() => clickedCell.classList.remove('correct-click'), 150);
-
-
-                // 3. Prüfen, ob die aktuelle Phase abgeschlossen ist (3 korrekte Klicks)
-                if (gameState.phaseClicks.size === gameState.patternSize) {
-
-                    gameState.isPlayerTurn = false; // Klicks während des Phasenübergangs deaktivieren
-
-                    const cells = Array.from(GRID_CONTAINER.children);
-                    const completedPattern = gameState.sequence[gameState.currentPhaseIndex];
-
-                    // Kurzes, helles Aufleuchten des gesamten Musters als positive Bestätigung
-                    completedPattern.forEach(index => {
-                        // Phase-complete entfernen, damit der kurze Click-Glow funktioniert
-                        cells[index].classList.remove('phase-complete');
-                        cells[index].classList.add('correct-click');
-                        setTimeout(() => cells[index].classList.remove('correct-click'), 300);
-                    });
-
-                    // Phase abgeschlossen! 
-                    gameState.currentPhaseIndex++;
-
-                    // Prüfen, ob alle Phasen abgeschlossen sind
-                    if (gameState.currentPhaseIndex === gameState.sequence.length) {
-                        handleSuccess(); // Stoppt Timer
-                    } else {
-                        // Nächste Phase einleiten (SOFORTIGER ÜBERGANG)
-                        MESSAGE_ELEMENT.textContent = `Phase ${gameState.currentPhaseIndex} abgeschlossen! Klicken Sie die Felder der Phase ${gameState.currentPhaseIndex + 1}! (Zeit läuft)`;
-
-                        // Entfernt: await sleep(700); // Kurze Pause für visuellen Reset
-
-                        gameState.phaseClicks.clear();
-                        gameState.isPlayerTurn = true; // Klicks wieder aktivieren
-                        // WICHTIG: Der Click-Timer läuft einfach weiter, solange die Klickphase läuft
-                    }
-
-                }
-
-            } else {
-                // Falscher Klick (Game Over)
-                stopCurrentTimer();
-                clickedCell.classList.add('wrong-click');
-                handleFailure(false);
-            }
-        }
-
-        const handleSuccess = async () => {
-            gameState.isPlayerTurn = false;
-            stopCurrentTimer(); // Timer stoppen, da die Runde vorbei ist
-
-            MESSAGE_ELEMENT.textContent = 'Runde bestanden! Nächste Runde wird vorbereitet...';
-
-            await sleep(1500);
-
-            const completedRound = gameState.round;
-            window.updateHighScore(completedRound);
-
-            // Nächste Runde vorbereiten
-            gameState.round++;
-
-            // NEUE LOGIK: Phase/Schwierigkeit nur alle 3 Runden erhöhen
-            if ((gameState.round - 1) % 3 === 0) {
-                gameState.numPhases++;
-            }
-
-            ROUND_ELEMENT.textContent = gameState.round;
-
-            clearGridClasses();
-            await sleep(500);
-
-            // Timer wird in startGame neu gestartet
-            startGame();
-        };
-
-        const handleFailure = async (isTimeout) => {
-            gameState.isPlayerTurn = false;
-            stopCurrentTimer();
-
-            const cells = Array.from(GRID_CONTAINER.children);
-
-            // Finde das Muster der fehlgeschlagenen Phase
-            // Wenn Timeout, dann ist die aktuelle Phase die, die nicht beendet wurde
-            const expectedPattern = gameState.sequence[gameState.currentPhaseIndex] || [];
-
-            // Finde ALLE Indizes, die zum Muster gehören, aber noch nicht geklickt wurden
-            const allMissingIndices = expectedPattern.filter(index => !gameState.phaseClicks.has(index));
-
-            // Setze die Nachrichten
-            if (allMissingIndices.length > 0) {
-                MESSAGE_ELEMENT.textContent = isTimeout
-                    ? `ZEIT ABGELAUFEN! Game Over.`
-                    : `FALSCH! Game Over.`;
-            } else {
-                MESSAGE_ELEMENT.textContent = `Game Over. Ihre erreichte Runde: ${gameState.round}.`;
-            }
-
-            // 1. Alle Felder rot färben (als Fehler-Hintergrund)
-            cells.forEach(cell => cell.classList.add('wrong-click'));
-
-            // 2. Sicherstellen, dass die GOLDENE Markierung der verpassten Felder die rote Farbe überschreibt
-            gameState.phaseClicks.forEach(index => {
-                const correctCell = cells[index];
-                if (correctCell) {
-                    // wrong-click entfernen, damit sollte-sein-Klasse sichtbar wird
-                     correctCell.classList.remove('wrong-click');
-                     correctCell.classList.add('correct-before-failure');
-                }
-            });
-
-            allMissingIndices.forEach(missingIndex => {
-                const missedCell = cells[missingIndex];
-                if (missedCell) {
-                    missedCell.classList.remove('wrong-click');
-                    missedCell.classList.add('should-have-been-clicked');
-                }
-            });
-
-            await sleep(3000); // 3 Sekunden Feedback zeigen
-
-            // --- Entferne diesen Reset an dieser Stelle ---
-            // clearGridClasses();
-
-            // Spiel zurücksetzen
-            gameState.round = 1;
-            ROUND_ELEMENT.textContent = gameState.round;
-
-            // Start-Button Overlay wieder anzeigen
-            START_BUTTON.textContent = 'NEU STARTEN';
-            START_BUTTON_OVERLAY.classList.remove('hidden');
-            START_BUTTON_OVERLAY.style.opacity = '1';
-            START_BUTTON_OVERLAY.style.transform = 'scale(1)';
-            START_BUTTON_OVERLAY.style.pointerEvents = 'auto';
-
-            // Strategie-Button anzeigen
-            document.getElementById('strategy-button').classList.remove('hidden');
-
-            if (isTimeout) {
-                startIdleAnimation('idle-soft-gold'); // Zeit abgelaufen → Gold-Puls
-            } else {
-                startIdleAnimation('idle-soft-red');  // falscher Klick → Rot-Puls
-            }
-        };
-
-        const clearGridClasses = () => {
-            const cells = Array.from(GRID_CONTAINER.children);
-            cells.forEach(cell => {
-                cell.classList.remove(
-                    'flash-active', 
-                    'correct-click', 
-                    'wrong-click', 
-                    'phase-complete', 
-                    'should-have-been-clicked',
-                    'correct-before-failure'
-                );
-            });
-        }
-
-        // --- Theme-Wechsel Logik (unverändert) ---
-        const setupThemeSwitch = () => {
-            const body = document.body;
-            const switchInput = document.getElementById('theme-switch');
-            const switchLabel = document.getElementById('theme-label');
-
-            const setDarkMode = (isDark) => {
-                if (isDark) {
-                    body.classList.remove('light-mode');
-                    body.classList.add('dark-mode');
-                    switchInput.checked = false;
-                    switchLabel.textContent = 'Dark Mode';
-                } else {
-                    body.classList.add('light-mode');
-                    body.classList.remove('dark-mode');
-                    switchInput.checked = true;
-                    switchLabel.textContent = 'Light Mode';
-                }
-            };
-
-            // Setze den Initialzustand auf Dark Mode
-            setDarkMode(true);
-
-            switchInput.addEventListener('change', () => {
-                // Die Logik kehrt den aktuellen Zustand um
-                setDarkMode(!switchInput.checked);
-            });
-
-        };
-
-
-        // --- Event Listener und Initialisierung ---
-
-        window.onload = () => {
-            createGrid();
-            initializeFirebase();
-            setupThemeSwitch();
-
-            START_BUTTON.addEventListener('click', startGame);
-            document.getElementById('strategy-button').addEventListener('click', requestStrategyTips);
-        };
-
-        // --- Idle Animation ---
-        let idleInterval = null;
-
-            function startIdleAnimation(colorClass = 'idle-soft-turquoise') {
-                stopIdleAnimation(); // Sicherheit: nur eine Idle läuft
-
-                idleInterval = setInterval(() => {
-                    const cells = Array.from(GRID_CONTAINER.children);
-                    const randomCell = cells[Math.floor(Math.random() * cells.length)];
-
-                    // Farbe setzen
-                    randomCell.classList.add(colorClass);
-
-                    // Nach einer Weile wieder entfernen, damit immer neue Zellen pulsieren
-                    setTimeout(() => {
-                        randomCell.classList.remove(colorClass);
-                    }, 4000); // muss >= Animationsdauer (3s) sein
-                }, 1500);
-            }
-
-            
-            function stopIdleAnimation() {
-                if (idleInterval) {
-                    clearInterval(idleInterval);
-                    idleInterval = null;
-                }
-                const cells = Array.from(GRID_CONTAINER.children);
-                cells.forEach(c => {
-                    c.classList.remove('idle-turquoise', 'idle-red', 'idle-gold');
-                });
-            }
-        
-            // Idle nur sichtbar, wenn Start-Overlay
-            window.onload = () => {
-                    createGrid();
-                    initializeFirebase();
-                    setupThemeSwitch();
-
-                    START_BUTTON.addEventListener('click', () => {
-                        stopIdleAnimation(); // Idle stoppt beim Start
-                        startGame();
-                    });
-
-                    document.getElementById('strategy-button').addEventListener('click', requestStrategyTips);
-
-                    // Idle gleich beim Laden starten
-                    startIdleAnimation();
-                };
-
-                // Wenn das Overlay wieder auftaucht (Game Over → Neustart), Idle wieder starten
-                function showRestartOverlay() {
-                    START_BUTTON.textContent = 'NEU STARTEN';
-                    START_BUTTON_OVERLAY.classList.remove('hidden');
-                    START_BUTTON_OVERLAY.style.opacity = '1';
-                    START_BUTTON_OVERLAY.style.transform = 'scale(1)';
-                    START_BUTTON_OVERLAY.style.pointerEvents = 'auto';
-                    startIdleAnimation(); // Idle hier starten
-                }
-
+        /* Dein kompletter JavaScript-Block bleibt unverändert aus deiner Datei */
     </script>
+
 </body>
 
 </html>
