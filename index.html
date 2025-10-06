@@ -86,6 +86,11 @@
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
             border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            user-select: none;
         }
 
         /* --- Farben & Effekte --- */
@@ -117,6 +122,68 @@
         .correct-before-failure {
             background-color: #189a77 !important;
             box-shadow: 0 0 8px #4fecc2;
+        }
+
+        /* Idle-Animation Klassen */
+        @keyframes idle-soft-turquoise {
+
+            0%,
+            100% {
+                background-color: #475569;
+                box-shadow: 0 0 5px rgba(34, 211, 238, 0.2);
+            }
+
+            50% {
+                background-color: #22d3ee;
+                box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+            }
+        }
+
+        @keyframes idle-soft-red {
+
+            0%,
+            100% {
+                background-color: #475569;
+                box-shadow: 0 0 5px rgba(239, 68, 68, 0.2);
+            }
+
+            50% {
+                background-color: #ef4444;
+                box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+            }
+        }
+
+        @keyframes idle-soft-gold {
+
+            0%,
+            100% {
+                background-color: #475569;
+                box-shadow: 0 0 5px rgba(251, 191, 36, 0.2);
+            }
+
+            50% {
+                background-color: #fbbf24;
+                box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+            }
+        }
+
+        .idle-soft-turquoise {
+            animation: idle-soft-turquoise 4s ease-in-out infinite;
+        }
+
+        .idle-soft-red {
+            animation: idle-soft-red 4s ease-in-out infinite;
+        }
+
+        .idle-soft-gold {
+            animation: idle-soft-gold 4s ease-in-out infinite;
+        }
+
+        .idle-fadeout {
+            animation: none !important;
+            transition: background-color 0.2s linear, box-shadow 0.2s linear;
+            background-color: #475569 !important;
+            box-shadow: none !important;
         }
 
         /* Timer */
@@ -154,6 +221,7 @@
 
         #start-button {
             box-shadow: 0 0 20px #0b7068, 0 0 10px #119b90;
+            border: none;
         }
 
         #start-button:hover {
@@ -292,9 +360,606 @@
         <p id="user-info" class="text-xs text-gray-500 mt-4 text-center"></p>
     </div>
 
-    <!-- Spiel-Logik (gekürzt beibehalten, da identisch mit deiner Version) -->
+    <!-- Kompletter JavaScript-Block (bereinigt & lauffähig) -->
     <script type="module">
-        /* Dein kompletter JavaScript-Block bleibt unverändert aus deiner Datei */
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Initialisiere globale Variablen
+        let app = null;
+        let db = null;
+        let auth = null;
+        let userId = null;
+        let firestoreDocRef = null;
+        let currentHighScore = 0;
+
+        setLogLevel('Debug');
+
+        const initializeFirebase = async () => {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+                if (!firebaseConfig) {
+                    console.warn("Firebase Config ist nicht verfügbar.");
+                    document.getElementById('high-score').textContent = 'N/A';
+                    return;
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('user-info').textContent = 'User ID: ' + userId;
+
+                        firestoreDocRef = doc(db, 'artifacts', appId, 'users', userId, 'memory_game_scores', 'high_score');
+                        setupHighScoreListener();
+                    } else {
+                        console.log("Benutzer ist ausgeloggt oder anonym.");
+                        userId = crypto.randomUUID();
+                        document.getElementById('user-info').textContent = 'User ID (Anonym): ' + userId;
+                        document.getElementById('high-score').textContent = 'N/A';
+                    }
+                });
+
+            } catch (error) {
+                console.error("Fehler bei der Firebase-Initialisierung oder Authentifizierung:", error);
+                document.getElementById('high-score').textContent = 'Fehler';
+            }
+        };
+
+        const setupHighScoreListener = () => {
+            if (!firestoreDocRef) return;
+
+            onSnapshot(firestoreDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentHighScore = data.maxRound || 0;
+                    document.getElementById('high-score').textContent = currentHighScore;
+                } else {
+                    currentHighScore = 0;
+                    document.getElementById('high-score').textContent = 0;
+                }
+            }, (error) => {
+                console.error("Fehler beim Abrufen des Highscore-Snapshots:", error);
+                document.getElementById('high-score').textContent = 'Fehler';
+            });
+        };
+
+        window.updateHighScore = async (newRound) => {
+            if (!firestoreDocRef) {
+                console.warn("Firestore ist nicht bereit.");
+                return;
+            }
+
+            if (newRound > currentHighScore) {
+                try {
+                    await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+                } catch (e) {
+                    console.error("Fehler beim Schreiben des Highscores:", e);
+                }
+            }
+        };
+
+        // --- Spiel-Logik ---
+        const GRID_SIZE = 9;
+        const GRID_CONTAINER = document.getElementById('grid-container-inner');
+        const MESSAGE_ELEMENT = document.getElementById('game-message');
+        const ROUND_ELEMENT = document.getElementById('current-round');
+        const START_BUTTON_OVERLAY = document.getElementById('start-button-overlay');
+        const START_BUTTON = document.getElementById('start-button');
+        const TIME_BAR = document.getElementById('time-bar');
+        const TIME_BAR_CONTAINER = document.getElementById('time-bar-container');
+
+        let idleInterval = null; // Idle-Interval hier global
+
+        let gameState = {
+            round: 1,
+            numPhases: 2,
+            patternSize: 3,
+            sequence: [],
+            isFlashing: false,
+            isPlayerTurn: false,
+            currentPhaseIndex: 0,
+            phaseClicks: new Set(),
+            flashDuration: 1000,
+            waitDuration: 500,
+            playerClickTimeLimit: 0,
+            flashPhaseDuration: 0,
+            timeoutId: null,
+        };
+
+        const API_KEY = "";
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // Strategie-Anfrage (externes API - optional)
+        const requestStrategyTips = async () => {
+            const STRATEGY_BUTTON = document.getElementById('strategy-button');
+            const STRATEGY_OUTPUT = document.getElementById('strategy-output');
+            const STRATEGY_CONTENT = document.getElementById('strategy-content');
+            const LOADING_SPINNER = document.getElementById('loading-spinner');
+
+            STRATEGY_BUTTON.disabled = true;
+            STRATEGY_OUTPUT.classList.remove('hidden');
+            STRATEGY_CONTENT.innerHTML = '';
+            LOADING_SPINNER.classList.remove('hidden');
+
+            const systemPrompt = "Sie sind ein freundlicher und motivierender Gedächtnistrainer. Geben Sie klare, umsetzbare Ratschläge, um das Arbeitsgedächtnis und die Sequenzierungsfähigkeit zu verbessern. Antworten Sie in prägnanten Absätzen auf Deutsch. Verwenden Sie Markdown für Formatierungen.";
+            const userQuery = "Welche Strategien gibt es, um sich eine Abfolge von 3x3-Quadratmustern in Phasen zu merken, bei denen die Reihenfolge der Klicks innerhalb der Phase nicht wichtig ist? Ich muss 3 Felder in der vorgegebenen Zeit anklicken, bevor ich zur nächsten Phase übergehe.";
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+
+            try {
+                const maxRetries = 3;
+                let attempt = 0;
+                let response;
+
+                while (attempt < maxRetries) {
+                    const delay = Math.pow(2, attempt) * 1000;
+                    if (attempt > 0) await sleep(delay);
+
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) break;
+                    attempt++;
+
+                    if (attempt === maxRetries) throw new Error(`API-Fehler nach ${maxRetries} Versuchen: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "Konnte keine Tipps generieren.";
+
+                const formattedText = text
+                    .replace(/\*\s/g, '• ')
+                    .replace(/\n\n/g, '<br><br>')
+                    .replace(/\n/g, '<br>');
+
+                STRATEGY_CONTENT.innerHTML = formattedText;
+
+            } catch (error) {
+                console.error("Fehler bei der Strategie-Anforderung:", error);
+                STRATEGY_CONTENT.innerHTML = "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.";
+            } finally {
+                LOADING_SPINNER.classList.add('hidden');
+                STRATEGY_BUTTON.disabled = false;
+            }
+        };
+
+        // Gitterzellen erstellen
+        const createGrid = () => {
+            GRID_CONTAINER.innerHTML = '';
+
+            for (let i = 0; i < GRID_SIZE; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell', 'rounded-lg', 'flex', 'items-center', 'justify-center', 'text-xl', 'font-bold');
+                cell.dataset.index = i;
+                cell.addEventListener('click', handleCellClick);
+                GRID_CONTAINER.appendChild(cell);
+            }
+        };
+
+        const calculateClickTimeLimit = () => {
+            const baseTimePerPhase = 2500;
+            const reductionPerComplexityLevel = 500;
+            const minTimePerPhase = 1000;
+            const complexityLevel = gameState.numPhases - 2;
+
+            const timePerPhaseAfterReduction = Math.max(
+                minTimePerPhase,
+                baseTimePerPhase - complexityLevel * reductionPerComplexityLevel
+            );
+
+            return timePerPhaseAfterReduction * gameState.numPhases;
+        }
+
+        const startGame = async () => {
+            stopIdleAnimation();
+
+            const cells = Array.from(GRID_CONTAINER.children);
+            cells.forEach(c => {
+                c.classList.remove('idle-soft-turquoise', 'idle-soft-red', 'idle-soft-gold');
+                c.classList.add('idle-fadeout');
+                setTimeout(() => {
+                    c.classList.remove('idle-fadeout');
+                }, 250);
+                c.style.animation = 'none';
+                void c.offsetWidth;
+                c.style.animation = '';
+            });
+
+            if (gameState.isFlashing || gameState.isPlayerTurn) return;
+
+            START_BUTTON_OVERLAY.style.pointerEvents = 'none';
+            START_BUTTON_OVERLAY.style.opacity = '0';
+            START_BUTTON_OVERLAY.style.transform = 'scale(0.9)';
+
+            await sleep(100);
+            START_BUTTON_OVERLAY.classList.add('hidden');
+
+            if (gameState.round === 1) {
+                gameState.numPhases = 2;
+                clearGridClasses();
+            }
+
+            stopCurrentTimer();
+            gameState.isFlashing = true;
+            gameState.isPlayerTurn = false;
+            gameState.currentPhaseIndex = 0;
+            gameState.phaseClicks.clear();
+
+            MESSAGE_ELEMENT.textContent = 'Merken Sie sich die Sequenz (Phase 1)...';
+            TIME_BAR_CONTAINER.classList.remove('hidden');
+
+            document.getElementById('strategy-button').classList.add('hidden');
+            document.getElementById('strategy-output').classList.add('hidden');
+
+            gameState.sequence = generateSequence(gameState.numPhases, gameState.patternSize);
+
+            gameState.flashPhaseDuration = gameState.numPhases * gameState.flashDuration + (gameState.numPhases - 1) * gameState.waitDuration;
+            gameState.playerClickTimeLimit = calculateClickTimeLimit();
+
+            startPhaseTimer(gameState.flashPhaseDuration, 'flash');
+
+            await flashSequence();
+            stopIdleAnimation();
+        };
+
+        const generateSequence = (numPhases, patternSize) => {
+            const seq = [];
+            const allIndices = Array.from({ length: GRID_SIZE }, (_, i) => i);
+
+            for (let i = 0; i < numPhases; i++) {
+                const pattern = [];
+                let availableIndices = [...allIndices];
+
+                for (let k = 0; k < Math.min(patternSize, GRID_SIZE); k++) {
+                    const randomIndex = Math.floor(Math.random() * availableIndices.length);
+                    const selectedIndex = availableIndices[randomIndex];
+
+                    pattern.push(selectedIndex);
+                    availableIndices.splice(randomIndex, 1);
+                }
+                seq.push(pattern);
+            }
+            return seq;
+        };
+
+        const flashSequence = async () => {
+            const cells = Array.from(GRID_CONTAINER.children);
+
+            for (let i = 0; i < gameState.sequence.length; i++) {
+                if (!gameState.isFlashing) return;
+
+                const pattern = gameState.sequence[i];
+
+                MESSAGE_ELEMENT.textContent = `Merken Sie sich die Sequenz (Phase ${i + 1})...`;
+
+                const activeCells = pattern.map(index => cells[index]);
+
+                activeCells.forEach(cell => cell.classList.add('flash-active'));
+                await sleep(gameState.flashDuration);
+
+                activeCells.forEach(cell => cell.classList.remove('flash-active'));
+
+                if (i < gameState.sequence.length - 1) {
+                    await sleep(gameState.waitDuration);
+                }
+            }
+
+            if (gameState.isFlashing) {
+                stopCurrentTimer();
+                startClickPhase();
+            }
+        };
+
+        const startPhaseTimer = (duration, phaseType) => {
+            stopCurrentTimer();
+
+            let barColor;
+
+            if (phaseType === 'flash') {
+                barColor = '#fde047';
+            } else if (phaseType === 'click') {
+                barColor = '#f87171';
+            }
+
+            TIME_BAR.style.backgroundColor = barColor;
+            TIME_BAR.style.transition = 'none';
+            TIME_BAR.style.width = '100%';
+            void TIME_BAR.offsetWidth;
+            TIME_BAR.style.transition = `width ${duration}ms linear`;
+            TIME_BAR.style.width = '0%';
+
+            gameState.timeoutId = setTimeout(() => {
+                handlePhaseTimeout(phaseType);
+            }, duration);
+        };
+
+        const stopCurrentTimer = () => {
+            if (gameState.timeoutId) {
+                clearTimeout(gameState.timeoutId);
+                gameState.timeoutId = null;
+            }
+            TIME_BAR.style.transition = 'none';
+            TIME_BAR.style.width = '100%';
+        };
+
+        const startClickPhase = () => {
+            gameState.isFlashing = false;
+            gameState.isPlayerTurn = true;
+            MESSAGE_ELEMENT.textContent = `Klicken Sie die Felder der Phase ${gameState.currentPhaseIndex + 1}! (Zeit läuft)`;
+
+            startPhaseTimer(gameState.playerClickTimeLimit, 'click');
+        };
+
+        const handlePhaseTimeout = (phaseType) => {
+            if (phaseType === 'flash') {
+                if (gameState.isFlashing) {
+                    console.log("Merkphase Timeout, aber Flashing läuft noch. Erzwinge Klickphase.");
+                    gameState.isFlashing = false;
+                    startClickPhase();
+                }
+
+            } else if (phaseType === 'click') {
+                if (!gameState.isPlayerTurn) return;
+
+                stopCurrentTimer();
+                MESSAGE_ELEMENT.textContent = `ZEIT ABGELAUFEN! Game Over. Ihre erreichte Runde: ${gameState.round}.`;
+                handleFailure(true);
+            }
+        };
+
+        async function handleCellClick(event) {
+            if (!gameState.isPlayerTurn) {
+                console.log("Klick ignoriert: Nicht die Spielerrunde.");
+                return;
+            }
+
+            const clickedCell = event.currentTarget;
+            const clickedIndex = parseInt(clickedCell.dataset.index);
+
+            const expectedPattern = gameState.sequence[gameState.currentPhaseIndex];
+
+            if (expectedPattern.includes(clickedIndex)) {
+                if (gameState.phaseClicks.has(clickedIndex)) {
+                    return;
+                }
+
+                gameState.phaseClicks.add(clickedIndex);
+                clickedCell.classList.add('phase-complete');
+
+                clickedCell.classList.add('correct-click');
+                setTimeout(() => clickedCell.classList.remove('correct-click'), 150);
+
+                if (gameState.phaseClicks.size === gameState.patternSize) {
+                    gameState.isPlayerTurn = false;
+
+                    const cells = Array.from(GRID_CONTAINER.children);
+                    const completedPattern = gameState.sequence[gameState.currentPhaseIndex];
+
+                    completedPattern.forEach(index => {
+                        cells[index].classList.remove('phase-complete');
+                        cells[index].classList.add('correct-click');
+                        setTimeout(() => cells[index].classList.remove('correct-click'), 300);
+                    });
+
+                    gameState.currentPhaseIndex++;
+
+                    if (gameState.currentPhaseIndex === gameState.sequence.length) {
+                        handleSuccess();
+                    } else {
+                        MESSAGE_ELEMENT.textContent = `Phase ${gameState.currentPhaseIndex} abgeschlossen! Klicken Sie die Felder der Phase ${gameState.currentPhaseIndex + 1}! (Zeit läuft)`;
+
+                        gameState.phaseClicks.clear();
+                        gameState.isPlayerTurn = true;
+                    }
+                }
+
+            } else {
+                stopCurrentTimer();
+                clickedCell.classList.add('wrong-click');
+                handleFailure(false);
+            }
+        }
+
+        const handleSuccess = async () => {
+            gameState.isPlayerTurn = false;
+            stopCurrentTimer();
+
+            MESSAGE_ELEMENT.textContent = 'Runde bestanden! Nächste Runde wird vorbereitet...';
+
+            await sleep(1500);
+
+            const completedRound = gameState.round;
+            window.updateHighScore(completedRound);
+
+            gameState.round++;
+
+            if ((gameState.round - 1) % 3 === 0) {
+                gameState.numPhases++;
+            }
+
+            ROUND_ELEMENT.textContent = gameState.round;
+
+            clearGridClasses();
+            await sleep(500);
+
+            startGame();
+        };
+
+        const handleFailure = async (isTimeout) => {
+            gameState.isPlayerTurn = false;
+            stopCurrentTimer();
+
+            const cells = Array.from(GRID_CONTAINER.children);
+            const expectedPattern = gameState.sequence[gameState.currentPhaseIndex] || [];
+            const allMissingIndices = expectedPattern.filter(index => !gameState.phaseClicks.has(index));
+
+            if (allMissingIndices.length > 0) {
+                MESSAGE_ELEMENT.textContent = isTimeout
+                    ? `ZEIT ABGELAUFEN! Game Over.`
+                    : `FALSCH! Game Over.`;
+            } else {
+                MESSAGE_ELEMENT.textContent = `Game Over. Ihre erreichte Runde: ${gameState.round}.`;
+            }
+
+            cells.forEach(cell => cell.classList.add('wrong-click'));
+
+            gameState.phaseClicks.forEach(index => {
+                const correctCell = cells[index];
+                if (correctCell) {
+                    correctCell.classList.remove('wrong-click');
+                    correctCell.classList.add('correct-before-failure');
+                }
+            });
+
+            allMissingIndices.forEach(missingIndex => {
+                const missedCell = cells[missingIndex];
+                if (missedCell) {
+                    missedCell.classList.remove('wrong-click');
+                    missedCell.classList.add('should-have-been-clicked');
+                }
+            });
+
+            await sleep(3000);
+
+            gameState.round = 1;
+            ROUND_ELEMENT.textContent = gameState.round;
+
+            START_BUTTON.textContent = 'NEU STARTEN';
+            START_BUTTON_OVERLAY.classList.remove('hidden');
+            START_BUTTON_OVERLAY.style.opacity = '1';
+            START_BUTTON_OVERLAY.style.transform = 'scale(1)';
+            START_BUTTON_OVERLAY.style.pointerEvents = 'auto';
+
+            document.getElementById('strategy-button').classList.remove('hidden');
+
+            if (isTimeout) {
+                startIdleAnimation('idle-soft-gold');
+            } else {
+                startIdleAnimation('idle-soft-red');
+            }
+        };
+
+        const clearGridClasses = () => {
+            const cells = Array.from(GRID_CONTAINER.children);
+            cells.forEach(cell => {
+                cell.classList.remove(
+                    'flash-active',
+                    'correct-click',
+                    'wrong-click',
+                    'phase-complete',
+                    'should-have-been-clicked',
+                    'correct-before-failure'
+                );
+            });
+        }
+
+        // Theme-Switch
+        const setupThemeSwitch = () => {
+            const body = document.body;
+            const switchInput = document.getElementById('theme-switch');
+            const switchLabel = document.getElementById('theme-label');
+
+            const setDarkMode = (isDark) => {
+                if (isDark) {
+                    body.classList.remove('light-mode');
+                    body.classList.add('dark-mode');
+                    switchInput.checked = false;
+                    switchLabel.textContent = 'Dark Mode';
+                } else {
+                    body.classList.add('light-mode');
+                    body.classList.remove('dark-mode');
+                    switchInput.checked = true;
+                    switchLabel.textContent = 'Light Mode';
+                }
+            };
+
+            setDarkMode(true);
+
+            switchInput.addEventListener('change', () => {
+                setDarkMode(!switchInput.checked);
+            });
+
+        };
+
+        // Idle Animation
+        function startIdleAnimation(colorClass = 'idle-soft-turquoise') {
+            stopIdleAnimation();
+
+            idleInterval = setInterval(() => {
+                const cells = Array.from(GRID_CONTAINER.children);
+                if (cells.length === 0) return;
+                const randomCell = cells[Math.floor(Math.random() * cells.length)];
+
+                randomCell.classList.add(colorClass);
+
+                setTimeout(() => {
+                    randomCell.classList.remove(colorClass);
+                }, 4000);
+            }, 1500);
+        }
+
+        function stopIdleAnimation() {
+            if (idleInterval) {
+                clearInterval(idleInterval);
+                idleInterval = null;
+            }
+            const cells = Array.from(GRID_CONTAINER.children);
+            cells.forEach(c => {
+                c.classList.remove('idle-soft-turquoise', 'idle-soft-red', 'idle-soft-gold', 'idle-fadeout');
+            });
+        }
+
+        function showRestartOverlay() {
+            START_BUTTON.textContent = 'NEU STARTEN';
+            START_BUTTON_OVERLAY.classList.remove('hidden');
+            START_BUTTON_OVERLAY.style.opacity = '1';
+            START_BUTTON_OVERLAY.style.transform = 'scale(1)';
+            START_BUTTON_OVERLAY.style.pointerEvents = 'auto';
+            startIdleAnimation();
+        }
+
+        // Initialisierung auf load (einmalig, sauber)
+        window.addEventListener('load', () => {
+            createGrid();
+            initializeFirebase();
+            setupThemeSwitch();
+
+            // Start: stoppe Idle und starte Spiel
+            START_BUTTON.addEventListener('click', () => {
+                stopIdleAnimation();
+                startGame();
+            });
+
+            document.getElementById('strategy-button').addEventListener('click', requestStrategyTips);
+
+            // Idle gleich beim Laden starten
+            startIdleAnimation();
+        });
+
     </script>
 
 </body>
