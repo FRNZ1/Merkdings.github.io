@@ -469,47 +469,47 @@
               console.log("Lokaler Highscore aktiv.");
 }
         
-                //const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                /* const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-                //if (initialAuthToken) {
-                  //  await signInWithCustomToken(auth, initialAuthToken);
-                //} else {
-                  //  await signInAnonymously(auth);
-                //}
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
 
-                //onAuthStateChanged(auth, (user) => {
-                    //if (user) {
-                        //userId = user.uid;
-                        //document.getElementById('user-info').textContent = 'User ID: ' + userId;
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('user-info').textContent = 'User ID: ' + userId;
 
-                        //firestoreDocRef = doc(db, 'artifacts', appId, 'users', userId, 'memory_game_scores', 'high_score');
-                      //  setupHighScoreListener();
-                    //} else {
-                        //console.log("Benutzer ist ausgeloggt oder anonym.");
-                        //userId = crypto.randomUUID();
-                      //  document.getElementById('user-info').textContent = 'User ID (Anonym): ' + userId;
-                    //    document.getElementById('high-score').textContent = 'N/A';
-                    //}
-                //});
+                        firestoreDocRef = doc(db, 'artifacts', appId, 'users', userId, 'memory_game_scores', 'high_score');
+                        setupHighScoreListener();
+                    } else {
+                        console.log("Benutzer ist ausgeloggt oder anonym.");
+                        userId = crypto.randomUUID();
+                        document.getElementById('user-info').textContent = 'User ID (Anonym): ' + userId;
+                        document.getElementById('high-score').textContent = 'N/A';
+                    }
+                });
 
-            //} catch (error) {
-              //  console.error("Fehler bei der Firebase-Initialisierung oder Authentifizierung:", error);
-                //document.getElementById('high-score').textContent = 'Fehler';
-            //}
-        //};
+            } catch (error) {
+                console.error("Fehler bei der Firebase-Initialisierung oder Authentifizierung:", error);
+                document.getElementById('high-score').textContent = 'Fehler';
+            }
+        };
 
-        //const setupHighScoreListener = () => {
-          //  if (!firestoreDocRef) return;
+        const setupHighScoreListener = () => {
+            if (!firestoreDocRef) return;
 
-//            onSnapshot(firestoreDocRef, (docSnap) => {
-  //              if (docSnap.exists()) {
-    //                const data = docSnap.data();
-      //              currentHighScore = data.maxRound || 0;
-        //            document.getElementById('high-score').textContent = currentHighScore;
-          //      } else {
-            //        currentHighScore = 0;
-              //      document.getElementById('high-score').textContent = 0;
-                /* }
+            onSnapshot(firestoreDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentHighScore = data.maxRound || 0;
+                    document.getElementById('high-score').textContent = currentHighScore;
+                } else {
+                    currentHighScore = 0;
+                    document.getElementById('high-score').textContent = 0;
+                 }
             }, (error) => {
                 console.error("Fehler beim Abrufen des Highscore-Snapshots:", error);
                 document.getElementById('high-score').textContent = 'Fehler';
@@ -520,7 +520,7 @@
             if (!firestoreDocRef) {
                 console.warn("Firestore ist nicht bereit.");
                 return;
-            } */
+            }
 
             if (newRound > currentHighScore) {
                 try {
@@ -529,7 +529,7 @@
                     console.error("Fehler beim Schreiben des Highscores:", e);
                 }
             }
-        };
+        };*/
 
         // --- Spiel-Logik ---
         const GRID_SIZE = 9;
@@ -1043,6 +1043,7 @@
 
 
 </html>
+
 
 
 
