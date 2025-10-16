@@ -378,32 +378,31 @@
         setLogLevel('Debug');
 
         const initializeFirebase = async () => {
-            try {
-            // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+              try {
+                // Firebase Config
                 const firebaseConfig = {
-                      apiKey: "AIzaSyDdZqXYU6oR6yahRt4R5uyObashSScCyf0",
-                      authDomain: "merkdings.firebaseapp.com",
-                      projectId: "merkdings",
-                      storageBucket: "merkdings.firebasestorage.app",
-                      messagingSenderId: "50434008709",
-                      appId: "1:50434008709:web:0f1583b896ec853f8b6bec",
-                      measurementId: "G-ZXRVNCPQ4Y"
-               };
-
+                  apiKey: "AIzaSyDdZqXYU6oR6yahRt4R5uyObashSScCyf0",
+                  authDomain: "merkdings.firebaseapp.com",
+                  projectId: "merkdings",
+                  storageBucket: "merkdings.firebasestorage.app",
+                  messagingSenderId: "50434008709",
+                  appId: "1:50434008709:web:0f1583b896ec853f8b6bec",
+                  measurementId: "G-ZXRVNCPQ4Y"
+                };
+            
                 if (!firebaseConfig || !firebaseConfig.apiKey) {
-                      console.warn("Firebase Config fehlt – nutze localStorage für Highscore.");
-                        setupLocalHighscore();
-                        return;
-            }
-
-            // Initialize Firebase
-                
+                  console.warn("Firebase Config fehlt – nutze localStorage für Highscore.");
+                  setupLocalHighscore();
+                  return;
+                }
+            
+                // Firebase starten
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 usingFirebase = true;
-
-
+            
+                // Anonym anmelden
                 await signInAnonymously(auth);
                 onAuthStateChanged(auth, (user) => {
                   if (user) {
@@ -423,7 +422,7 @@
                 setupLocalHighscore();
               }
             };
-            
+                        
             // Firestore Highscore-Listener
             const setupHighScoreListener = () => {
               if (!firestoreDocRef) return;
@@ -472,26 +471,26 @@
         
                 //const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                //if (initialAuthToken) {
+                  //  await signInWithCustomToken(auth, initialAuthToken);
+                //} else {
+                  //  await signInAnonymously(auth);
+                //}
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('user-info').textContent = 'User ID: ' + userId;
+                //onAuthStateChanged(auth, (user) => {
+                    //if (user) {
+                        //userId = user.uid;
+                        //document.getElementById('user-info').textContent = 'User ID: ' + userId;
 
-                        firestoreDocRef = doc(db, 'artifacts', appId, 'users', userId, 'memory_game_scores', 'high_score');
-                        setupHighScoreListener();
-                    } else {
-                        console.log("Benutzer ist ausgeloggt oder anonym.");
-                        userId = crypto.randomUUID();
-                        document.getElementById('user-info').textContent = 'User ID (Anonym): ' + userId;
-                        document.getElementById('high-score').textContent = 'N/A';
-                    }
-                });
+                        //firestoreDocRef = doc(db, 'artifacts', appId, 'users', userId, 'memory_game_scores', 'high_score');
+                      //  setupHighScoreListener();
+                    //} else {
+                        //console.log("Benutzer ist ausgeloggt oder anonym.");
+                        //userId = crypto.randomUUID();
+                      //  document.getElementById('user-info').textContent = 'User ID (Anonym): ' + userId;
+                    //    document.getElementById('high-score').textContent = 'N/A';
+                    //}
+                //});
 
             } catch (error) {
                 console.error("Fehler bei der Firebase-Initialisierung oder Authentifizierung:", error);
@@ -1044,5 +1043,6 @@
 
 
 </html>
+
 
 
