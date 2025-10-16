@@ -380,7 +380,8 @@
         const initializeFirebase = async () => {
             // Setze sofort einen Standardwert, damit kein "Laden..." angezeigt wird
             document.getElementById('high-score').textContent = '0';
-              try {
+              
+            try {
                 // Firebase Config
                 const firebaseConfig = {
                   apiKey: "AIzaSyDdZqXYU6oR6yahRt4R5uyObashSScCyf0",
@@ -408,7 +409,7 @@
                 await signInAnonymously(auth);
                 onAuthStateChanged(auth, (user) => {
                 
-                // Prüfe, ob schon eine gespeicherte UID existiert
+                // --- UID prüfen ---
                 let savedUid = localStorage.getItem('firebaseAnonUid');
                   
                 if (savedUid) {
@@ -417,8 +418,10 @@
                       userId = savedUid;
                       firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
                       setupHighScoreListener();
-                      updateHighscoreStatus('online');
-                } else {
+                      //updateHighscoreStatus('online');
+                    return;
+                    
+                /*} else {
                       // Noch keine UID -> jetzt anonym anmelden
                     await signInAnonymously(auth);
                     onAuthStateChanged(auth, (user) => {
@@ -434,7 +437,14 @@
                           setupLocalHighscore();
                         }
                       });
-                    }
+                    }*/
+
+                    const result = await signInAnonymously(auth);
+                    userId = result.user.uid;
+                    localStorage.setItem('firebaseAnonUid', userId);
+                
+                    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                    setupHighScoreListener();
             
               } catch (err) {
                 console.error("Fehler bei der Firebase-Initialisierung:", err);
@@ -1074,6 +1084,7 @@
 
 
 </html>
+
 
 
 
