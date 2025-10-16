@@ -407,16 +407,34 @@
                 // Anonym anmelden
                 await signInAnonymously(auth);
                 onAuthStateChanged(auth, (user) => {
-                  if (user) {
-                    userId = user.uid;
-                    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                    setupHighScoreListener();
-                  } else {
-                    console.warn("Anonyme Auth fehlgeschlagen, nutze localStorage.");
-                    usingFirebase = false;
-                    setupLocalHighscore();
-                  }
-                });
+                
+                // Prüfe, ob schon eine gespeicherte UID existiert
+                let savedUid = localStorage.getItem('firebaseAnonUid');
+                  
+                if (savedUid) {
+                    console.log("Bestehende UID gefunden:", savedUid);
+                      // Trick: Wir tun so, als wäre das unser User — kein Re-Login nötig
+                      userId = savedUid;
+                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                      setupHighScoreListener();
+                      updateHighscoreStatus('online');
+                } else {
+                      // Noch keine UID -> jetzt anonym anmelden
+                    await signInAnonymously(auth);
+                    onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                          userId = user.uid;
+                          localStorage.setItem('firebaseAnonUid', userId); // 🔹 Speichere UID dauerhaft
+                          firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                          setupHighScoreListener();
+                          updateHighscoreStatus('online');
+                    } else {
+                          console.warn("Anonyme Auth fehlgeschlagen, nutze localStorage.");
+                          usingFirebase = false;
+                          setupLocalHighscore();
+                        }
+                      });
+                    }
             
               } catch (err) {
                 console.error("Fehler bei der Firebase-Initialisierung:", err);
@@ -924,8 +942,10 @@
 
             await sleep(3000);
 
-            gameState.round = 1;
-            ROUND_ELEMENT.textContent = gameState.round;
+            //gameState.round = 1;
+            //ROUND_ELEMENT.textContent = gameState.round;
+
+            
 
             START_BUTTON.textContent = 'NEU STARTEN';
             START_BUTTON_OVERLAY.classList.remove('hidden');
@@ -1030,8 +1050,17 @@
             // Start: stoppe Idle und starte Spiel
             START_BUTTON.addEventListener('click', () => {
                 stopIdleAnimation();
-                startGame();
-            });
+            
+                if (START_BUTTON.textContent === 'NEU STARTEN') {
+                // 🟡 Hier passiert der echte Neustart
+                    gameState.round = 1;
+                    ROUND_ELEMENT.textContent = gameState.round;
+                    isRestart = true;
+                  } else {
+                    isRestart = false;
+                  }
+                  startGame();
+                });
 
             document.getElementById('strategy-button').addEventListener('click', requestStrategyTips);
 
@@ -1045,6 +1074,7 @@
 
 
 </html>
+
 
 
 
