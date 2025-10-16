@@ -492,24 +492,24 @@
                     //}
                 //});
 
-            } catch (error) {
-                console.error("Fehler bei der Firebase-Initialisierung oder Authentifizierung:", error);
-                document.getElementById('high-score').textContent = 'Fehler';
-            }
-        };
+            //} catch (error) {
+              //  console.error("Fehler bei der Firebase-Initialisierung oder Authentifizierung:", error);
+                //document.getElementById('high-score').textContent = 'Fehler';
+            //}
+        //};
 
-        const setupHighScoreListener = () => {
-            if (!firestoreDocRef) return;
+        //const setupHighScoreListener = () => {
+          //  if (!firestoreDocRef) return;
 
-            onSnapshot(firestoreDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    currentHighScore = data.maxRound || 0;
-                    document.getElementById('high-score').textContent = currentHighScore;
-                } else {
-                    currentHighScore = 0;
-                    document.getElementById('high-score').textContent = 0;
-                }
+//            onSnapshot(firestoreDocRef, (docSnap) => {
+  //              if (docSnap.exists()) {
+    //                const data = docSnap.data();
+      //              currentHighScore = data.maxRound || 0;
+        //            document.getElementById('high-score').textContent = currentHighScore;
+          //      } else {
+            //        currentHighScore = 0;
+              //      document.getElementById('high-score').textContent = 0;
+                /* }
             }, (error) => {
                 console.error("Fehler beim Abrufen des Highscore-Snapshots:", error);
                 document.getElementById('high-score').textContent = 'Fehler';
@@ -520,7 +520,7 @@
             if (!firestoreDocRef) {
                 console.warn("Firestore ist nicht bereit.");
                 return;
-            }
+            } */
 
             if (newRound > currentHighScore) {
                 try {
@@ -1043,6 +1043,7 @@
 
 
 </html>
+
 
 
 
