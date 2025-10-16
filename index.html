@@ -401,17 +401,40 @@
                 }
             
                 // Firebase starten
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                usingFirebase = true;
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    usingFirebase = true;
             
                 // Anonym anmelden
-                await signInAnonymously(auth);
-                onAuthStateChanged(auth, (user) => {
+                /*await signInAnonymously(auth);
+                onAuthStateChanged(auth, (user) => {*/
+
+                const savedUid = localStorage.getItem('firebaseAnonUid');
+                    if (savedUid) {
+                      console.log("Bestehende UID gefunden:", savedUid);
+                      userId = savedUid;
+                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                      setupHighScoreListener();
+                      return;
+                    }
                 
+                    // --- Noch keine UID → anonym anmelden ---
+                    const result = await signInAnonymously(auth);
+                    userId = result.user?.uid;
+                
+                    if (userId) {
+                      localStorage.setItem('firebaseAnonUid', userId);
+                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                      setupHighScoreListener();
+                      console.log("Neue UID angelegt:", userId);
+                    } else {
+                      console.warn("Anonyme Anmeldung fehlgeschlagen → nutze Local Highscore");
+                      usingFirebase = false;
+                      setupLocalHighscore();
+                    }
                 // --- UID prüfen ---
-                let savedUid = localStorage.getItem('firebaseAnonUid');
+                /*let savedUid = localStorage.getItem('firebaseAnonUid');
                 if (savedUid) {
                     console.log("Bestehende UID gefunden:", savedUid);
                       // Trick: Wir tun so, als wäre das unser User — kein Re-Login nötig
@@ -437,7 +460,7 @@
                           setupLocalHighscore();
                         }
                       });
-                    }*/
+                    }
 
                     const result = await signInAnonymously(auth);
                     userId = result.user?.uid;
@@ -1095,6 +1118,7 @@
 
 
 </html>
+
 
 
 
