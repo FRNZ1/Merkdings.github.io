@@ -390,13 +390,86 @@
                       measurementId: "G-ZXRVNCPQ4Y"
                };
 
+                if (!firebaseConfig || !firebaseConfig.apiKey) {
+                      console.warn("Firebase Config fehlt – nutze localStorage für Highscore.");
+                        setupLocalHighscore();
+                        return;
+            }
+
             // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
+                
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                usingFirebase = true;
 
+
+                await signInAnonymously(auth);
+                onAuthStateChanged(auth, (user) => {
+                  if (user) {
+                    userId = user.uid;
+                    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                    setupHighScoreListener();
+                  } else {
+                    console.warn("Anonyme Auth fehlgeschlagen, nutze localStorage.");
+                    usingFirebase = false;
+                    setupLocalHighscore();
+                  }
+                });
+            
+              } catch (err) {
+                console.error("Fehler bei der Firebase-Initialisierung:", err);
+                usingFirebase = false;
+                setupLocalHighscore();
+              }
+            };
+            
+            // Firestore Highscore-Listener
+            const setupHighScoreListener = () => {
+              if (!firestoreDocRef) return;
+              onSnapshot(firestoreDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                  const data = docSnap.data();
+                  currentHighScore = data.maxRound || 0;
+                  document.getElementById('high-score').textContent = currentHighScore;
+                } else {
+                  currentHighScore = 0;
+                  document.getElementById('high-score').textContent = 0;
+                }
+              }, (error) => {
+                console.error("Fehler beim Highscore-Listener:", error);
+                setupLocalHighscore(); // Fallback, wenn Firestore fehlschlägt
+              });
+            };
+            
+            // Hybrid-Update-Funktion
+            window.updateHighScore = async (newRound) => {
+              if (newRound <= currentHighScore) return;
+            
+              currentHighScore = newRound;
+              document.getElementById('high-score').textContent = newRound;
+            
+              if (usingFirebase && firestoreDocRef) {
+                try {
+                  await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+                } catch (e) {
+                  console.error("Fehler beim Schreiben in Firestore:", e);
+                  setupLocalHighscore(); // Fallback auf lokal
+                }
+              } else {
+                localStorage.setItem('localHighScore', newRound);
+              }
+            };
+            
+            // --- Lokaler Highscore-Fallback ---
+            function setupLocalHighscore() {
+              const saved = parseInt(localStorage.getItem('localHighScore')) || 0;
+              currentHighScore = saved;
+              document.getElementById('high-score').textContent = saved;
+              usingFirebase = false;
+              console.log("Lokaler Highscore aktiv.");
+}
+        
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
                 if (initialAuthToken) {
@@ -971,3 +1044,4 @@
 
 
 </html>
+
