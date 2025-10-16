@@ -379,7 +379,8 @@
 
         const initializeFirebase = async () => {
             // Setze sofort einen Standardwert, damit kein "Laden..." angezeigt wird
-            document.getElementById('high-score').textContent = '0';
+            const highScoreEl = document.getElementById('high-score');
+            if (highScoreEl) highScoreEl.textContent = '0';
               
             try {
                 // Firebase Config
@@ -411,14 +412,13 @@
                 
                 // --- UID prüfen ---
                 let savedUid = localStorage.getItem('firebaseAnonUid');
-                  
                 if (savedUid) {
                     console.log("Bestehende UID gefunden:", savedUid);
                       // Trick: Wir tun so, als wäre das unser User — kein Re-Login nötig
                       userId = savedUid;
                       firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
                       setupHighScoreListener();
-                      //updateHighscoreStatus('online');
+                      updateHighscoreStatus('online');
                     return;
                     
                 /*} else {
@@ -440,11 +440,22 @@
                     }*/
 
                     const result = await signInAnonymously(auth);
-                    userId = result.user.uid;
-                    localStorage.setItem('firebaseAnonUid', userId);
+                    userId = result.user?.uid;
+                    if (userId) {
+                      localStorage.setItem('firebaseAnonUid', userId);
+                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                      setupHighScoreListener();
+                      updateHighscoreStatus && updateHighscoreStatus('online');
+                    } else {
+                      // Falls etwas schief ging
+                      console.warn("Anonyme Anmeldung lieferte keine UID, fallback zu lokalem Highscore.");
+                      usingFirebase = false;
+                      setupLocalHighscore();
+                    }
+                    /*localStorage.setItem('firebaseAnonUid', userId);
                 
                     firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                    setupHighScoreListener();
+                    setupHighScoreListener();*/
             
               } catch (err) {
                 console.error("Fehler bei der Firebase-Initialisierung:", err);
@@ -1084,6 +1095,7 @@
 
 
 </html>
+
 
 
 
