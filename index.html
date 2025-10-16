@@ -289,7 +289,7 @@
 <body class="dark-mode">
 
     <!-- Theme Switch -->
-    <!-- <div class="absolute top-4 left-4 z-20">
+    <div class="absolute top-4 left-4 z-20">
         <label for="theme-switch" class="flex items-center cursor-pointer theme-switch-label">
             <input id="theme-switch" type="checkbox" class="sr-only">
             <div class="relative">
@@ -298,8 +298,8 @@
             </div>
             <span id="theme-label" class="ml-3 text-sm font-medium">Dark Mode</span>
         </label>
-    </div> -->
-
+    </div>
+    
     <!-- Hauptcontainer -->
     <div class="w-full main-card p-6 rounded-xl border">
         <h1 class="text-3xl font-extrabold text-center mb-4 text-title">Gedächtnis-Sequenz-Trainer</h1>
@@ -1022,7 +1022,7 @@
         }
 
         // Theme-Switch
-        /*const setupThemeSwitch = () => {
+        const setupThemeSwitch = () => {
             const body = document.body;
             const switchInput = document.getElementById('theme-switch');
             const switchLabel = document.getElementById('theme-label');
@@ -1047,7 +1047,7 @@
                 setDarkMode(!switchInput.checked);
             });
 
-        };*/
+        };
 
         // Idle Animation
         function startIdleAnimation(colorClass = 'idle-soft-turquoise') {
@@ -1124,6 +1124,7 @@
 
 
 </html>
+
 
 
 
