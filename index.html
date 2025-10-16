@@ -378,6 +378,8 @@
         setLogLevel('Debug');
 
         const initializeFirebase = async () => {
+            // Setze sofort einen Standardwert, damit kein "Laden..." angezeigt wird
+            document.getElementById('high-score').textContent = '0';
               try {
                 // Firebase Config
                 const firebaseConfig = {
@@ -1043,6 +1045,7 @@
 
 
 </html>
+
 
 
 
