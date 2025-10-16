@@ -374,6 +374,7 @@
         let userId = null;
         let firestoreDocRef = null;
         let currentHighScore = 0;
+        let isRestart = false;
 
         setLogLevel('Debug');
 
@@ -1096,15 +1097,20 @@
                 stopIdleAnimation();
             
                 if (START_BUTTON.textContent === 'NEU STARTEN') {
-                // 🟡 Hier passiert der echte Neustart
+                    // Nur bei echtem Neustart alles zurücksetzen
+                    isRestart = true;
                     gameState.round = 1;
                     ROUND_ELEMENT.textContent = gameState.round;
-                    isRestart = true;
-                  } else {
+                } else {
                     isRestart = false;
-                  }
-                  startGame();
-                });
+                }
+            
+                // Felder säubern und verstecken
+                clearGridClasses();
+                START_BUTTON_OVERLAY.classList.add('hidden');
+            
+                startGame();
+            });
 
             document.getElementById('strategy-button').addEventListener('click', requestStrategyTips);
 
@@ -1118,6 +1124,7 @@
 
 
 </html>
+
 
 
 
