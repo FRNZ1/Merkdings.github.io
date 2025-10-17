@@ -375,20 +375,19 @@
     <!-- Kompletter JavaScript-Block (bereinigt & lauffähig) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-  collection,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    getDocs,
+    query,
+    orderBy,
+    limit,
+    collection,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
   // ----------------------------
   // 🔧 Firebase Setup
@@ -408,12 +407,9 @@ import {
   const auth = getAuth(app);
 
   let userId = null;
-        let firestoreDocRef = null;
-        let currentHighScore = 0;
+  let currentHighScore = 0;
   let personalHighscore = 0;
   let globalHighscore = 0;
-    let isRestart = false;
-    let usingFirebase = false;
 
   // ----------------------------
   // 🔥 Initialisierung
@@ -426,6 +422,7 @@ import {
     try {
       console.log("🔌 Firebase wird initialisiert...");
 
+      // Prüfe gespeicherte UID oder melde anonym an
       const savedUid = localStorage.getItem("firebaseAnonUid");
       if (savedUid) {
         userId = savedUid;
@@ -440,7 +437,7 @@ import {
       // Highscores abrufen
       await loadHighscores();
 
-      // Realtime Listener für eigenen Score
+      // Echtzeitlistener für persönlichen Score
       const userRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
       onSnapshot(userRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -460,26 +457,18 @@ import {
   // ----------------------------
   async function loadHighscores() {
     const highScoreEl = document.getElementById("high-score");
-    if (highScoreEl) highScoreEl.textContent = "0";
+    if (highScoreEl) highScoreEl.textContent = "Laden...";
 
     try {
-      // Eigener Score
+      // Persönlicher Highscore
       const userRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
       const userSnap = await getDoc(userRef);
       personalHighscore = userSnap.exists() ? userSnap.data().maxRound || 0 : 0;
 
-      // Globaler Score (bester aller Nutzer)
-      const globalQuery = query(
-        collection(db, "artifacts", "memory-app", "users"),
-        orderBy("maxRound", "desc"),
-        limit(1)
-      );
-
-      const querySnap = await getDocs(globalQuery);
-      if (!querySnap.empty) {
-        const bestUser = querySnap.docs[0].data();
-        globalHighscore = bestUser.maxRound || 0;
-      }
+      // Globaler Highscore (beste Runde aller)
+      const globalRef = doc(db, "artifacts", "memory-app", "global", "high_score");
+      const globalSnap = await getDoc(globalRef);
+      globalHighscore = globalSnap.exists() ? globalSnap.data().maxRound || 0 : 0;
 
       updateScoreDisplay();
       console.log("🏆 Persönlicher Highscore:", personalHighscore);
@@ -492,11 +481,11 @@ import {
   }
 
   // ----------------------------
-  // 🔄 Score-Anzeige aktualisieren
+  // 🔄 Anzeige aktualisieren
   // ----------------------------
   function updateScoreDisplay() {
     const personalEl = document.getElementById("high-score");
-    const globalEl = document.getElementById("global-score");
+    const globalEl = document.getElementById("global-highscore");
 
     if (personalEl) personalEl.textContent = personalHighscore;
     if (globalEl) globalEl.textContent = globalHighscore;
@@ -514,7 +503,19 @@ import {
     try {
       const userRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
       await setDoc(userRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
-      console.log("✅ Highscore aktualisiert:", newRound);
+
+      // Globalen Rekord aktualisieren, falls nötig
+      const globalRef = doc(db, "artifacts", "memory-app", "global", "high_score");
+      const globalSnap = await getDoc(globalRef);
+      const currentGlobal = globalSnap.exists() ? (globalSnap.data().maxRound || 0) : 0;
+      if (newRound > currentGlobal) {
+        await setDoc(globalRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+        globalHighscore = newRound;
+        updateScoreDisplay();
+        console.log("🌍 Neuer Weltrekord:", newRound);
+      }
+
+      console.log("✅ Highscore gespeichert:", newRound);
     } catch (e) {
       console.error("Fehler beim Speichern:", e);
       setupLocalHighscore();
@@ -530,52 +531,6 @@ import {
     document.getElementById("high-score").textContent = saved;
     console.log("📦 Lokaler Highscore aktiv:", saved);
   }
-
-        async function loadInitialHighscore() {
-  try {
-    const docSnap = await getDoc(firestoreDocRef);
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      currentHighScore = data.maxRound || 0;
-      document.getElementById('high-score').textContent = currentHighScore;
-      console.log("🏆 Initialer Highscore:", currentHighScore);
-    } else {
-      document.getElementById('high-score').textContent = 0;
-      console.log("ℹ️ Kein Highscore gefunden.");
-    }
-  } catch (error) {
-    console.error("Fehler beim Laden des Highscores:", error);
-    setupLocalHighscore();
-  }
-}
-
-        async function loadGlobalHighscore() {
-  try {
-    const globalRef = doc(db, 'artifacts', 'memory-app', 'global', 'high_score');
-    const snap = await getDoc(globalRef);
-    if (snap.exists()) {
-      const val = snap.data().maxRound || 0;
-      document.getElementById('global-highscore').textContent = val;
-      console.log('🌍 Globaler Highscore:', val);
-    } else {
-      document.getElementById('global-highscore').textContent = 0;
-      console.log("Kein globaler Highscore gefunden.");
-    }
-  } catch (e) {
-    console.error('Fehler beim Laden globalen Highscores:', e);
-  }
-}
-
-    // optional: Global doc prüfen & updaten
-    const globalRef = doc(db, 'artifacts', 'memory-app', 'global', 'high_score');
-    const globalSnap = await getDoc(globalRef);
-    const currentGlobal = globalSnap.exists() ? (globalSnap.data().maxRound || 0) : 0;
-    if (newRound > currentGlobal) {
-      await setDoc(globalRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
-      document.getElementById('global-highscore').textContent = newRound;
-    }
-  } catch (e) { ... }
-}
         
         // --- Spiel-Logik ---
         const GRID_SIZE = 9;
@@ -1105,6 +1060,7 @@ import {
 
 
 </html>
+
 
 
 
