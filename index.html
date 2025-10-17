@@ -369,490 +369,145 @@
     <!-- Kompletter JavaScript-Block (bereinigt & lauffähig) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        //import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let app, db, auth, userId, firestoreDocRef, usingFirebase = false, currentHighScore = 0;
-        
-        // Initialisiere globale Variablen
-        let app = null;
-        let db = null;
-        let auth = null;
-        let userId = null;
-        let firestoreDocRef = null;
-        let currentHighScore = 0;
-        let isRestart = false;
-        let usingFirebase = false;
+  // ----------------------------
+  // 🔧 Firebase Setup
+  // ----------------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyDdZqXYU6oR6yahRt4R5uyObashSScCyf0",
+    authDomain: "merkdings.firebaseapp.com",
+    projectId: "merkdings",
+    storageBucket: "merkdings.firebasestorage.app",
+    messagingSenderId: "50434008709",
+    appId: "1:50434008709:web:0f1583b896ec853f8b6bec",
+    measurementId: "G-ZXRVNCPQ4Y"
+  };
 
-        setLogLevel('Debug');
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
 
-        document.addEventListener("DOMContentLoaded", async () => {
-          await initializeFirebase();
-        });
-        
-        const initializeFirebase = async () => {
-            // Setze sofort einen Standardwert, damit kein "Laden..." angezeigt wird
-            const highScoreEl = document.getElementById('high-score');
-            if (highScoreEl) highScoreEl.textContent = '0';
-              
-            try {
-                // Firebase Config
-                const firebaseConfig = {
-                  apiKey: "AIzaSyDdZqXYU6oR6yahRt4R5uyObashSScCyf0",
-                  authDomain: "merkdings.firebaseapp.com",
-                  projectId: "merkdings",
-                  storageBucket: "merkdings.firebasestorage.app",
-                  messagingSenderId: "50434008709",
-                  appId: "1:50434008709:web:0f1583b896ec853f8b6bec",
-                  measurementId: "G-ZXRVNCPQ4Y"
-                };
-            
-                if (!firebaseConfig || !firebaseConfig.apiKey) {
-                  console.warn("Firebase Config fehlt – nutze localStorage für Highscore.");
-                  setupLocalHighscore();
-                  return;
-                }
-            
-                // Firebase starten
-                    app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-                    usingFirebase = true;
-                
-                // Warte bis Firebase Auth geladen hat
-                    await new Promise((resolve) => {
-                      const unsub = onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                          userId = user.uid;
-                          localStorage.setItem("firebaseAnonUid", userId);
-                          resolve();
-                        } else {
-                          resolve();
-                        }
-                        unsub();
-                      });
-                    });
+  let userId = null;
+  let personalHighscore = 0;
+  let globalHighscore = 0;
 
-                const savedUid = localStorage.getItem('firebaseAnonUid');
-                
-                userId = localStorage.getItem("firebaseAnonUid");
-                if (!userId) {
-                  console.log("Keine UID gefunden → anonym anmelden...");
-                  const result = await signInAnonymously(auth);
-                  userId = result.user?.uid;
-                  localStorage.setItem("firebaseAnonUid", userId);
-                }
-            
-                console.log("🔥 Aktive UID:", userId);
-                firestoreDocRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
-            
-                // 🔹 Highscore initial laden & anzeigen
-                await loadInitialHighscore();
-            
-                // 🔹 Listener aktivieren (für Live-Updates)
-                setupHighScoreListener();
-                
-                /*if (savedUid) {
-                  console.log("Bestehende UID gefunden:", savedUid);
-                  userId = savedUid;
-                  firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                  
-                  await loadInitialHighscore();  //  Wichtig: lädt den Wert aus Firestore
-                  setupHighScoreListener();      //  Listener für Live-Updates starten
-                
-                } else {
-                  console.log("Keine UID gefunden, melde anonym an...");
-                  const result = await signInAnonymously(auth);
-                  userId = result.user?.uid;
-                    
-                  if (userId) {
-                    localStorage.setItem('firebaseAnonUid', userId);
-                    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                    await setDoc(firestoreDocRef, { maxRound: 0 }, { merge: true });
-                    setupHighScoreListener();
-                  } else {
-                    console.warn("Anonyme Anmeldung fehlgeschlagen - Local Highscore aktiv");
-                    setupLocalHighscore();
-                    return;
-                  }
-                }
+  // ----------------------------
+  // 🔥 Initialisierung
+  // ----------------------------
+  document.addEventListener("DOMContentLoaded", async () => {
+    await initializeFirebase();
+  });
 
-                 // Auth-Überwachung – Session bleibt bestehen
-                onAuthStateChanged(auth, (user) => {
-                  if (user && user.uid) {
-                    console.log("✅ Firebase-Session aktiv:", user.uid);
-                  } else {
-                    console.warn("⚠️ Firebase-Session verloren, verwende gespeicherte UID:", localStorage.getItem('firebaseAnonUid'));
-                  }
-                });*/
-            
-              /*} catch (err) {
-                  console.error("Fehler bei der Firebase-Initialisierung:", err);
-                  setupLocalHighscore();
-                };*/
-
-
-                
-                /*const savedUid = localStorage.getItem('firebaseAnonUid');
-                    if (savedUid) {
-                      console.log("Bestehende UID gefunden:", savedUid);
-                      userId = savedUid;
-                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                      setupHighScoreListener();
-                      return;
-                    }*/
-
-                    /*const setupHighScoreListener = () => {
-                        getDoc(firestoreDocRef)
-                              .then((docSnap) => {
-                                if (docSnap.exists()) {
-                                  const data = docSnap.data();
-                                  currentHighScore = data.maxRound || 0;
-                                  document.getElementById('high-score').textContent = currentHighScore;
-                                  console.log("Initialer Highscore geladen:", currentHighScore);
-                                } else {
-                                  console.log("Kein Highscore-Dokument gefunden, setze auf 0.");
-                                  document.getElementById('high-score').textContent = 0;
-                                }
-                              })
-                              .catch((error) => {
-                                console.error("Fehler beim Laden des initialen Highscores:", error);
-                              });*/
-                
-                    // --- Noch keine UID → anonym anmelden ---
-                    
-                // --- UID prüfen ---
-                /*const savedUid = localStorage.getItem('firebaseAnonUid');
-                if (savedUid) {
-  console.log("Bestehende UID gefunden:", savedUid);
-  userId = savedUid;
-  firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-  await loadInitialHighscore(); // Zeige gespeicherten Highscore sofort
-  setupHighScoreListener();     // Starte Listener
-} else {
-  const result = await signInAnonymously(auth);
-  userId = result.user?.uid;
-  if (userId) {
-    localStorage.setItem('firebaseAnonUid', userId);
-    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-    await setDoc(firestoreDocRef, { maxRound: 0 }); // optional, falls leer
-    setupHighScoreListener();
-  } else {
-    setupLocalHighscore();
-    return;
-  }
-}*/
-                /*if (savedUid) {
-                    console.log("Bestehende UID gefunden:", savedUid);
-                      // Trick: Wir tun so, als wäre das unser User — kein Re-Login nötig
-                      userId = savedUid;
-                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                      setupHighScoreListener();
-                        await loadInitialHighscore(); // Highscore direkt nach Laden anzeigen
-                    setupHighScoreListener();  
-                    //updateHighscoreStatus('online');
-                    return;   
-                } else {
-                      // Noch keine UID -> jetzt anonym anmelden
-                    const result = await signInAnonymously(auth);
-                      userId = result.user?.uid;
-                      localStorage.setItem('firebaseAnonUid', userId);
-                      console.log("🆕 Neue UID angelegt:", userId);
-                    }*/
-
-                //firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-
-                    // Highscore einmalig laden
-                    //await loadInitialHighscore();
-                
-                    // Listener starten (für Live-Updates)
-                    //setupHighScoreListener();
-                    
-
-                    /*const result = await signInAnonymously(auth);
-                    userId = result.user?.uid;
-                    if (userId) {
-                      localStorage.setItem('firebaseAnonUid', userId);
-                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                      setupHighScoreListener();
-                      updateHighscoreStatus && updateHighscoreStatus('online');
-                    } else {
-                      // Falls etwas schief ging
-                      console.warn("Anonyme Anmeldung lieferte keine UID, fallback zu lokalem Highscore.");
-                      usingFirebase = false;
-                      setupLocalHighscore();
-                    }*/
-                    /*localStorage.setItem('firebaseAnonUid', userId);
-                
-                    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                    setupHighScoreListener();*/
-            
-              } catch (err) {
-                console.error("Fehler bei der Firebase-Initialisierung:", err);
-                usingFirebase = false;
-                setupLocalHighscore();
-              }
-            };
-
-        async function loadInitialHighscore() {
+  async function initializeFirebase() {
     try {
-      const docSnap = await getDoc(firestoreDocRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        currentHighScore = data.maxRound || 0;
-        document.getElementById("high-score").textContent = currentHighScore;
-        console.log("🏆 Initialer Highscore:", currentHighScore);
+      console.log("🔌 Firebase wird initialisiert...");
+
+      const savedUid = localStorage.getItem("firebaseAnonUid");
+      if (savedUid) {
+        userId = savedUid;
       } else {
-        document.getElementById("high-score").textContent = 0;
-        console.log("ℹ️ Kein Highscore gefunden.");
+        const result = await signInAnonymously(auth);
+        userId = result.user?.uid;
+        localStorage.setItem("firebaseAnonUid", userId);
       }
-    } catch (error) {
-      console.error("Fehler beim Laden des Highscores:", error);
+
+      console.log("✅ Angemeldet als:", userId);
+
+      // Highscores abrufen
+      await loadHighscores();
+
+      // Realtime Listener für eigenen Score
+      const userRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
+      onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+          personalHighscore = docSnap.data().maxRound || 0;
+          updateScoreDisplay();
+        }
+      });
+
+    } catch (err) {
+      console.error("❌ Fehler bei Firebase:", err);
       setupLocalHighscore();
     }
   }
 
-  function setupHighScoreListener() {
-    if (!firestoreDocRef) return;
-    onSnapshot(firestoreDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        currentHighScore = data.maxRound || 0;
-        document.getElementById("high-score").textContent = currentHighScore;
+  // ----------------------------
+  // 🧠 Highscores laden
+  // ----------------------------
+  async function loadHighscores() {
+    const highScoreEl = document.getElementById("high-score");
+    if (highScoreEl) highScoreEl.textContent = "0";
+
+    try {
+      // Eigener Score
+      const userRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
+      const userSnap = await getDoc(userRef);
+      personalHighscore = userSnap.exists() ? userSnap.data().maxRound || 0 : 0;
+
+      // Globaler Score (bester aller Nutzer)
+      const globalQuery = query(
+        collection(db, "artifacts", "memory-app", "users"),
+        orderBy("maxRound", "desc"),
+        limit(1)
+      );
+
+      const querySnap = await getDocs(globalQuery);
+      if (!querySnap.empty) {
+        const bestUser = querySnap.docs[0].data();
+        globalHighscore = bestUser.maxRound || 0;
       }
-    }, (error) => {
-      console.error("Fehler beim Highscore-Listener:", error);
+
+      updateScoreDisplay();
+      console.log("🏆 Persönlicher Highscore:", personalHighscore);
+      console.log("🌍 Globaler Highscore:", globalHighscore);
+
+    } catch (error) {
+      console.error("Fehler beim Laden der Highscores:", error);
       setupLocalHighscore();
-    });
+    }
   }
 
+  // ----------------------------
+  // 🔄 Score-Anzeige aktualisieren
+  // ----------------------------
+  function updateScoreDisplay() {
+    const personalEl = document.getElementById("high-score");
+    const globalEl = document.getElementById("global-score");
+
+    if (personalEl) personalEl.textContent = personalHighscore;
+    if (globalEl) globalEl.textContent = globalHighscore;
+  }
+
+  // ----------------------------
+  // 💾 Highscore speichern
+  // ----------------------------
   window.updateHighScore = async (newRound) => {
-    if (newRound <= currentHighScore) return;
+    if (newRound <= personalHighscore) return;
 
-    currentHighScore = newRound;
-    document.getElementById("high-score").textContent = newRound;
+    personalHighscore = newRound;
+    updateScoreDisplay();
 
-    if (usingFirebase && firestoreDocRef) {
-      try {
-        await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
-      } catch (e) {
-        console.error("Fehler beim Schreiben in Firestore:", e);
-        setupLocalHighscore();
-      }
-    } else {
-      localStorage.setItem("localHighScore", newRound);
+    try {
+      const userRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
+      await setDoc(userRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+      console.log("✅ Highscore aktualisiert:", newRound);
+    } catch (e) {
+      console.error("Fehler beim Speichern:", e);
+      setupLocalHighscore();
     }
   };
 
+  // ----------------------------
+  // 💾 Lokaler Fallback
+  // ----------------------------
   function setupLocalHighscore() {
     const saved = parseInt(localStorage.getItem("localHighScore")) || 0;
-    currentHighScore = saved;
+    personalHighscore = saved;
     document.getElementById("high-score").textContent = saved;
-    usingFirebase = false;
-    console.log("💾 Lokaler Highscore aktiv.");
+    console.log("📦 Lokaler Highscore aktiv:", saved);
   }
-        async function loadInitialHighscore() {
-    try {
-      const docSnap = await getDoc(firestoreDocRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        currentHighScore = data.maxRound || 0;
-        document.getElementById("high-score").textContent = currentHighScore;
-        console.log("🏆 Initialer Highscore:", currentHighScore);
-      } else {
-        document.getElementById("high-score").textContent = 0;
-        console.log("ℹ️ Kein Highscore gefunden.");
-      }
-    } catch (error) {
-      console.error("Fehler beim Laden des Highscores:", error);
-      setupLocalHighscore();
-    }
-  }
-
-  function setupHighScoreListener() {
-    if (!firestoreDocRef) return;
-    onSnapshot(firestoreDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        currentHighScore = data.maxRound || 0;
-        document.getElementById("high-score").textContent = currentHighScore;
-      }
-    }, (error) => {
-      console.error("Fehler beim Highscore-Listener:", error);
-      setupLocalHighscore();
-    });
-  }
-
-  window.updateHighScore = async (newRound) => {
-    if (newRound <= currentHighScore) return;
-
-    currentHighScore = newRound;
-    document.getElementById("high-score").textContent = newRound;
-
-    if (usingFirebase && firestoreDocRef) {
-      try {
-        await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
-      } catch (e) {
-        console.error("Fehler beim Schreiben in Firestore:", e);
-        setupLocalHighscore();
-      }
-    } else {
-      localStorage.setItem("localHighScore", newRound);
-    }
-  };
-
-  function setupLocalHighscore() {
-    const saved = parseInt(localStorage.getItem("localHighScore")) || 0;
-    currentHighScore = saved;
-    document.getElementById("high-score").textContent = saved;
-    usingFirebase = false;
-    console.log("💾 Lokaler Highscore aktiv.");
-  }
-        
-                // Highscore einmalig laden
-                const loadInitialHighscore = async () => {
-                  try {
-                    const docSnap = await getDoc(firestoreDocRef);
-                    if (docSnap.exists()) {
-                      const data = docSnap.data();
-                      currentHighScore = data.maxRound || 0;
-                      document.getElementById('high-score').textContent = currentHighScore;
-                      console.log("🏆 Initialer Highscore:", currentHighScore);
-                    } else {
-                      document.getElementById('high-score').textContent = 0;
-                      console.log("ℹ️ Kein Highscore gefunden.");
-                    }
-
-                  } catch (error) {
-                    console.error("Fehler beim Laden des Highscores:", error);
-                    setupLocalHighscore();
-                  }
-                };
-            
-            /*// Firestore Highscore-Listener
-            const setupHighScoreListener = () => {
-              if (!firestoreDocRef) return;
-              onSnapshot(firestoreDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                  const data = docSnap.data();
-                  currentHighScore = data.maxRound || 0;
-                  document.getElementById('high-score').textContent = currentHighScore;
-                } else {
-                  currentHighScore = 0;
-                  document.getElementById('high-score').textContent = 0;
-                }
-              }, (error) => {
-                console.error("Fehler beim Highscore-Listener:", error);
-                setupLocalHighscore(); // Fallback, wenn Firestore fehlschlägt
-              });
-            };*/
-
-            // Listener für Live-Updates
-            const setupHighScoreListener = () => {
-              if (!firestoreDocRef) return;
-              onSnapshot(firestoreDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                  const data = docSnap.data();
-                  currentHighScore = data.maxRound || 0;
-                  document.getElementById('high-score').textContent = currentHighScore;
-                }
-              }, (error) => {
-                console.error("Fehler beim Highscore-Listener:", error);
-                setupLocalHighscore();
-              });
-            };
-            
-            // Hybrid-Update-Funktion
-            window.updateHighScore = async (newRound) => {
-              if (newRound <= currentHighScore) return;
-            
-              currentHighScore = newRound;
-              document.getElementById('high-score').textContent = newRound;
-            
-              if (usingFirebase && firestoreDocRef) {
-                try {
-                  await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
-                } catch (e) {
-                  console.error("Fehler beim Schreiben in Firestore:", e);
-                  setupLocalHighscore(); // Fallback auf lokal
-                }
-              } else {
-                localStorage.setItem('localHighScore', newRound);
-              }
-            };
-            
-            // --- Lokaler Highscore-Fallback ---
-            function setupLocalHighscore() {
-              const saved = parseInt(localStorage.getItem('localHighScore')) || 0;
-              currentHighScore = saved;
-              document.getElementById('high-score').textContent = saved;
-              usingFirebase = false;
-              console.log("Lokaler Highscore aktiv.");
-}
-        
-                /* const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('user-info').textContent = 'User ID: ' + userId;
-
-                        firestoreDocRef = doc(db, 'artifacts', appId, 'users', userId, 'memory_game_scores', 'high_score');
-                        setupHighScoreListener();
-                    } else {
-                        console.log("Benutzer ist ausgeloggt oder anonym.");
-                        userId = crypto.randomUUID();
-                        document.getElementById('user-info').textContent = 'User ID (Anonym): ' + userId;
-                        document.getElementById('high-score').textContent = 'N/A';
-                    }
-                });
-
-            } catch (error) {
-                console.error("Fehler bei der Firebase-Initialisierung oder Authentifizierung:", error);
-                document.getElementById('high-score').textContent = 'Fehler';
-            }
-        };
-
-        const setupHighScoreListener = () => {
-            if (!firestoreDocRef) return;
-
-            onSnapshot(firestoreDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    currentHighScore = data.maxRound || 0;
-                    document.getElementById('high-score').textContent = currentHighScore;
-                } else {
-                    currentHighScore = 0;
-                    document.getElementById('high-score').textContent = 0;
-                 }
-            }, (error) => {
-                console.error("Fehler beim Abrufen des Highscore-Snapshots:", error);
-                document.getElementById('high-score').textContent = 'Fehler';
-            });
-        };
-
-        window.updateHighScore = async (newRound) => {
-            if (!firestoreDocRef) {
-                console.warn("Firestore ist nicht bereit.");
-                return;
-            }
-
-            if (newRound > currentHighScore) {
-                try {
-                    await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
-                } catch (e) {
-                    console.error("Fehler beim Schreiben des Highscores:", e);
-                }
-            }
-        };*/
 
         // --- Spiel-Logik ---
         const GRID_SIZE = 9;
@@ -1382,6 +1037,7 @@
 
 
 </html>
+
 
 
 
