@@ -413,13 +413,37 @@
                 onAuthStateChanged(auth, (user) => {*/
 
                 const savedUid = localStorage.getItem('firebaseAnonUid');
+if (savedUid) {
+  console.log("Bestehende UID gefunden:", savedUid);
+  userId = savedUid;
+  firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+  
+  await loadInitialHighscore();  // 🔹 Wichtig: lädt den Wert aus Firestore
+  setupHighScoreListener();      // 🔹 Listener für Live-Updates starten
+} else {
+  console.log("Keine UID gefunden, melde anonym an...");
+  const result = await signInAnonymously(auth);
+  userId = result.user?.uid;
+  if (userId) {
+    localStorage.setItem('firebaseAnonUid', userId);
+    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+    await setDoc(firestoreDocRef, { maxRound: 0 }, { merge: true });
+    setupHighScoreListener();
+  } else {
+    console.warn("Anonyme Anmeldung fehlgeschlagen → Local Highscore aktiv");
+    setupLocalHighscore();
+    return;
+  }
+}
+                
+                /*const savedUid = localStorage.getItem('firebaseAnonUid');
                     if (savedUid) {
                       console.log("Bestehende UID gefunden:", savedUid);
                       userId = savedUid;
                       firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
                       setupHighScoreListener();
                       return;
-                    }
+                    }*/
 
                     /*const setupHighScoreListener = () => {
                         getDoc(firestoreDocRef)
@@ -458,8 +482,8 @@
   console.log("Bestehende UID gefunden:", savedUid);
   userId = savedUid;
   firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-  await loadInitialHighscore(); // ✅ Zeige gespeicherten Highscore sofort
-  setupHighScoreListener();     // ✅ Starte Listener
+  await loadInitialHighscore(); // Zeige gespeicherten Highscore sofort
+  setupHighScoreListener();     // Starte Listener
 } else {
   const result = await signInAnonymously(auth);
   userId = result.user?.uid;
@@ -1209,6 +1233,7 @@
 
 
 </html>
+
 
 
 
