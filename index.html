@@ -451,6 +451,14 @@
         }
       });
 
+        const globalRef = doc(db, "artifacts", "memory-app", "global", "high_score");
+onSnapshot(globalRef, (snap) => {
+  if (snap.exists()) {
+    globalHighscore = snap.data().maxRound || 0;
+    updateScoreDisplay();
+  }
+});
+
     } catch (err) {
       console.error("❌ Fehler bei Firebase:", err);
       setupLocalHighscore();
@@ -537,6 +545,36 @@
     document.getElementById("high-score").textContent = saved;
     console.log("📦 Lokaler Highscore aktiv:", saved);
   }
+
+    window.updateHighScore = async (newRound) => {
+  if (newRound <= personalHighscore) return;
+
+  personalHighscore = newRound;
+  updateScoreDisplay();
+
+  try {
+    // Persönlichen Highscore speichern
+    const userRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
+    await setDoc(userRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+    console.log("✅ Persönlicher Highscore aktualisiert:", newRound);
+
+    // 🔥 Weltrekord überschreiben, wenn höher
+    const globalRef = doc(db, "artifacts", "memory-app", "global", "high_score");
+    const globalSnap = await getDoc(globalRef);
+    const currentGlobal = globalSnap.exists() ? (globalSnap.data().maxRound || 0) : 0;
+
+    if (newRound > currentGlobal) {
+      await setDoc(globalRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+      globalHighscore = newRound;
+      updateScoreDisplay();
+      console.log("🌍 Neuer Weltrekord gesetzt:", newRound);
+    }
+
+  } catch (e) {
+    console.error("Fehler beim Speichern:", e);
+    setupLocalHighscore();
+  }
+};    
         
         // --- Spiel-Logik ---
         const GRID_SIZE = 9;
@@ -1066,6 +1104,7 @@
 
 
 </html>
+
 
 
 
