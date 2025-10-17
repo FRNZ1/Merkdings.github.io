@@ -453,8 +453,27 @@
                       setupLocalHighscore();
                     }
                 // --- UID prüfen ---
-                const savedUid = localStorage.getItem('firebaseAnonUid');
+                /*const savedUid = localStorage.getItem('firebaseAnonUid');
                 if (savedUid) {
+  console.log("Bestehende UID gefunden:", savedUid);
+  userId = savedUid;
+  firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+  await loadInitialHighscore(); // ✅ Zeige gespeicherten Highscore sofort
+  setupHighScoreListener();     // ✅ Starte Listener
+} else {
+  const result = await signInAnonymously(auth);
+  userId = result.user?.uid;
+  if (userId) {
+    localStorage.setItem('firebaseAnonUid', userId);
+    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+    await setDoc(firestoreDocRef, { maxRound: 0 }); // optional, falls leer
+    setupHighScoreListener();
+  } else {
+    setupLocalHighscore();
+    return;
+  }
+}*/
+                /*if (savedUid) {
                     console.log("Bestehende UID gefunden:", savedUid);
                       // Trick: Wir tun so, als wäre das unser User — kein Re-Login nötig
                       userId = savedUid;
@@ -470,15 +489,15 @@
                       userId = result.user?.uid;
                       localStorage.setItem('firebaseAnonUid', userId);
                       console.log("🆕 Neue UID angelegt:", userId);
-                    }
+                    }*/
 
-                firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                //firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
 
                     // Highscore einmalig laden
                     //await loadInitialHighscore();
                 
                     // Listener starten (für Live-Updates)
-                    setupHighScoreListener();
+                    //setupHighScoreListener();
                         
                     /*onAuthStateChanged(auth, (user) => {
                     if (user) {
@@ -1190,6 +1209,7 @@
 
 
 </html>
+
 
 
 
