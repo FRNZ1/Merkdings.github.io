@@ -366,6 +366,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Initialisiere globale Variablen
         let app = null;
@@ -419,6 +420,23 @@
                       setupHighScoreListener();
                       return;
                     }
+
+                    const setupHighScoreListener = () => {
+                        getDoc(firestoreDocRef)
+                              .then((docSnap) => {
+                                if (docSnap.exists()) {
+                                  const data = docSnap.data();
+                                  currentHighScore = data.maxRound || 0;
+                                  document.getElementById('high-score').textContent = currentHighScore;
+                                  console.log("Initialer Highscore geladen:", currentHighScore);
+                                } else {
+                                  console.log("Kein Highscore-Dokument gefunden, setze auf 0.");
+                                  document.getElementById('high-score').textContent = 0;
+                                }
+                              })
+                              .catch((error) => {
+                                console.error("Fehler beim Laden des initialen Highscores:", error);
+                              });
                 
                     // --- Noch keine UID → anonym anmelden ---
                     const result = await signInAnonymously(auth);
@@ -1124,6 +1142,7 @@
 
 
 </html>
+
 
 
 
