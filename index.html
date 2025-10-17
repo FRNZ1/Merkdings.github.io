@@ -321,9 +321,11 @@
                 <p id="current-round" class="text-2xl font-bold text-title">1</p>
             </div>
             <div class="text-center">
-                <span>Höchste Runde: <span id="high-score">0</span></span><br>
+                <div id="personal-highscore">Persönlicher Highscore: <span id="high-score">Laden...</span></div>
+<div id="global-highscore">Weltrekord: <span id="global-highscore">Laden...</span></div>
+           <!-- <span>Höchste Runde: <span id="high-score">0</span></span><br>
                 <span>Weltrekord: <span id="global-score">0</span></span>
-            <!--    <p class="text-xs font-semibold uppercase text-gray-400">Höchste Runde</p>  -->
+                <p class="text-xs font-semibold uppercase text-gray-400">Höchste Runde</p>  -->
                 <p id="high-score" class="text-2xl font-bold text-red-400">Laden...</p>
             </div>
         </div>
@@ -371,8 +373,18 @@
     <!-- Kompletter JavaScript-Block (bereinigt & lauffähig) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  collectionGroup,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
 
   // ----------------------------
   // 🔧 Firebase Setup
@@ -392,9 +404,12 @@
   const auth = getAuth(app);
 
   let userId = null;
+        let firestoreDocRef = null;
+        let currentHighScore = 0;
   let personalHighscore = 0;
   let globalHighscore = 0;
     let isRestart = false;
+    let usingFirebase = false;
 
   // ----------------------------
   // 🔥 Initialisierung
@@ -512,6 +527,56 @@
     console.log("📦 Lokaler Highscore aktiv:", saved);
   }
 
+        async function loadInitialHighscore() {
+  try {
+    const docSnap = await getDoc(firestoreDocRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      currentHighScore = data.maxRound || 0;
+      document.getElementById('high-score').textContent = currentHighScore;
+      console.log("🏆 Initialer Highscore:", currentHighScore);
+    } else {
+      document.getElementById('high-score').textContent = 0;
+      console.log("ℹ️ Kein Highscore gefunden.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Laden des Highscores:", error);
+    setupLocalHighscore();
+  }
+}
+
+        async function loadGlobalHighscore() {
+
+        if (usingFirebase && firestoreDocRef) {
+  try {
+    await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+
+      try {
+    const globalRef = doc(db, 'artifacts', 'memory-app', 'global', 'high_score');
+    const snap = await getDoc(globalRef);
+    if (snap?.exists()) {
+      const val = snap.data().maxRound || 0;
+      document.getElementById('global-highscore').textContent = val;
+      console.log('🌍 Globaler Highscore:', val);
+    } else {
+      document.getElementById('global-highscore').textContent = 0;
+    }
+  } catch (e) {
+    console.error('Fehler beim Laden globalen Highscores:', e);
+  }
+}
+
+    // optional: Global doc prüfen & updaten
+    const globalRef = doc(db, 'artifacts', 'memory-app', 'global', 'high_score');
+    const globalSnap = await getDoc(globalRef);
+    const currentGlobal = globalSnap.exists() ? (globalSnap.data().maxRound || 0) : 0;
+    if (newRound > currentGlobal) {
+      await setDoc(globalRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+      document.getElementById('global-highscore').textContent = newRound;
+    }
+  } catch (e) { ... }
+}
+        
         // --- Spiel-Logik ---
         const GRID_SIZE = 9;
         const GRID_CONTAINER = document.getElementById('grid-container-inner');
@@ -1040,6 +1105,7 @@
 
 
 </html>
+
 
 
 
