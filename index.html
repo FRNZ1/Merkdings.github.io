@@ -379,6 +379,10 @@
 
         setLogLevel('Debug');
 
+        document.addEventListener("DOMContentLoaded", async () => {
+          await initializeFirebase();
+        });
+        
         const initializeFirebase = async () => {
             // Setze sofort einen Standardwert, damit kein "Laden..." angezeigt wird
             const highScoreEl = document.getElementById('high-score');
@@ -407,17 +411,48 @@
                     db = getFirestore(app);
                     auth = getAuth(app);
                     usingFirebase = true;
-            
+                
+                // Warte bis Firebase Auth geladen hat
+                    await new Promise((resolve) => {
+                      const unsub = onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                          userId = user.uid;
+                          localStorage.setItem("firebaseAnonUid", userId);
+                          resolve();
+                        } else {
+                          resolve();
+                        }
+                        unsub();
+                      });
+                    });
 
                 const savedUid = localStorage.getItem('firebaseAnonUid');
                 
-                if (savedUid) {
+                userId = localStorage.getItem("firebaseAnonUid");
+                if (!userId) {
+      console.log("Keine UID gefunden → anonym anmelden...");
+      const result = await signInAnonymously(auth);
+      userId = result.user?.uid;
+      localStorage.setItem("firebaseAnonUid", userId);
+    }
+
+    console.log("🔥 Aktive UID:", userId);
+    firestoreDocRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
+
+    // 🔹 Highscore initial laden & anzeigen
+    await loadInitialHighscore();
+
+    // 🔹 Listener aktivieren (für Live-Updates)
+    setupHighScoreListener();
+                
+                /*if (savedUid) {
                   console.log("Bestehende UID gefunden:", savedUid);
                   userId = savedUid;
                   firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
                   
-                  await loadInitialHighscore();  // 🔹 Wichtig: lädt den Wert aus Firestore
-                  setupHighScoreListener();      // 🔹 Listener für Live-Updates starten
+                  await loadInitialHighscore();  //  Wichtig: lädt den Wert aus Firestore
+                  setupHighScoreListener();      //  Listener für Live-Updates starten
+                
                 } else {
                   console.log("Keine UID gefunden, melde anonym an...");
                   const result = await signInAnonymously(auth);
@@ -442,7 +477,7 @@
                   } else {
                     console.warn("⚠️ Firebase-Session verloren, verwende gespeicherte UID:", localStorage.getItem('firebaseAnonUid'));
                   }
-                });
+                });*/
             
               } catch (err) {
                 console.error("Fehler bei der Firebase-Initialisierung:", err);
@@ -1221,6 +1256,7 @@
 
 
 </html>
+
 
 
 
