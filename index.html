@@ -421,7 +421,7 @@
                       return;
                     }
 
-                    const setupHighScoreListener = () => {
+                    /*const setupHighScoreListener = () => {
                         getDoc(firestoreDocRef)
                               .then((docSnap) => {
                                 if (docSnap.exists()) {
@@ -436,7 +436,7 @@
                               })
                               .catch((error) => {
                                 console.error("Fehler beim Laden des initialen Highscores:", error);
-                              });
+                              });*/
                 
                     // --- Noch keine UID → anonym anmelden ---
                     const result = await signInAnonymously(auth);
@@ -453,15 +453,17 @@
                       setupLocalHighscore();
                     }
                 // --- UID prüfen ---
-                let savedUid = localStorage.getItem('firebaseAnonUid');
+                const savedUid = localStorage.getItem('firebaseAnonUid');
                 if (savedUid) {
                     console.log("Bestehende UID gefunden:", savedUid);
                       // Trick: Wir tun so, als wäre das unser User — kein Re-Login nötig
                       userId = savedUid;
-                      /*firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
                       setupHighScoreListener();
-                      updateHighscoreStatus('online');
-                    return;*/   
+                        await loadInitialHighscore(); // Highscore direkt nach Laden anzeigen
+                    setupHighScoreListener();  
+                    //updateHighscoreStatus('online');
+                    return;   
                 } else {
                       // Noch keine UID -> jetzt anonym anmelden
                     const result = await signInAnonymously(auth);
@@ -473,7 +475,7 @@
                 firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
 
                     // Highscore einmalig laden
-                    await loadInitialHighscore();
+                    //await loadInitialHighscore();
                 
                     // Listener starten (für Live-Updates)
                     setupHighScoreListener();
@@ -1188,6 +1190,7 @@
 
 
 </html>
+
 
 
 
