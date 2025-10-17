@@ -430,7 +430,7 @@ if (savedUid) {
     await setDoc(firestoreDocRef, { maxRound: 0 }, { merge: true });
     setupHighScoreListener();
   } else {
-    console.warn("Anonyme Anmeldung fehlgeschlagen → Local Highscore aktiv");
+    console.warn("Anonyme Anmeldung fehlgeschlagen - Local Highscore aktiv");
     setupLocalHighscore();
     return;
   }
@@ -463,7 +463,7 @@ if (savedUid) {
                               });*/
                 
                     // --- Noch keine UID → anonym anmelden ---
-                    const result = await signInAnonymously(auth);
+                    /*const result = await signInAnonymously(auth);
                     userId = result.user?.uid;
                 
                     if (userId) {
@@ -475,7 +475,7 @@ if (savedUid) {
                       console.warn("Anonyme Anmeldung fehlgeschlagen → nutze Local Highscore");
                       usingFirebase = false;
                       setupLocalHighscore();
-                    }
+                    }*/
                 // --- UID prüfen ---
                 /*const savedUid = localStorage.getItem('firebaseAnonUid');
                 if (savedUid) {
@@ -1233,6 +1233,7 @@ if (savedUid) {
 
 
 </html>
+
 
 
 
