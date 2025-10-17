@@ -321,8 +321,12 @@
                 <p id="current-round" class="text-2xl font-bold text-title">1</p>
             </div>
             <div class="text-center">
-                <div id="personal-highscore">Persönlicher Highscore: <span id="high-score">Laden...</span></div>
-<div id="global-highscore">Weltrekord: <span id="global-highscore">Laden...</span></div>
+                <div id="personal-highscore">
+                    Persönlicher Highscore: <span id="high-score">Laden...</span>
+                </div>
+                <div id="global-highscore">
+                    Weltrekord: <span id="global-score">Laden...</span>
+                </div>
            <!-- <span>Höchste Runde: <span id="high-score">0</span></span><br>
                 <span>Weltrekord: <span id="global-score">0</span></span>
                 <p class="text-xs font-semibold uppercase text-gray-400">Höchste Runde</p>  
@@ -410,6 +414,7 @@
   let currentHighScore = 0;
   let personalHighscore = 0;
   let globalHighscore = 0;
+    let isRestart = false;
 
   // ----------------------------
   // 🔥 Initialisierung
@@ -484,12 +489,13 @@
   // 🔄 Anzeige aktualisieren
   // ----------------------------
   function updateScoreDisplay() {
-    const personalEl = document.getElementById("high-score");
-    const globalEl = document.getElementById("global-highscore");
+      const personalEl = document.getElementById("high-score");
+      const globalEl = document.getElementById("global-score");
+    
+      if (personalEl) personalEl.textContent = personalHighscore;
+      if (globalEl) globalEl.textContent = globalHighscore;
+    }
 
-    if (personalEl) personalEl.textContent = personalHighscore;
-    if (globalEl) globalEl.textContent = globalHighscore;
-  }
 
   // ----------------------------
   // 💾 Highscore speichern
@@ -1060,6 +1066,7 @@
 
 
 </html>
+
 
 
 
