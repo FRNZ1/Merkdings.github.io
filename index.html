@@ -285,10 +285,10 @@
         }
     </style>
 
-    <!-- FIREBASE import -->
+    <!-- FIREBASE import 
   <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>-->
 
 </head>
 
@@ -325,8 +325,8 @@
 <div id="global-highscore">Weltrekord: <span id="global-highscore">Laden...</span></div>
            <!-- <span>Höchste Runde: <span id="high-score">0</span></span><br>
                 <span>Weltrekord: <span id="global-score">0</span></span>
-                <p class="text-xs font-semibold uppercase text-gray-400">Höchste Runde</p>  -->
-                <p id="high-score" class="text-2xl font-bold text-red-400">Laden...</p>
+                <p class="text-xs font-semibold uppercase text-gray-400">Höchste Runde</p>  
+                <p id="high-score" class="text-2xl font-bold text-red-400">Laden...</p>-->
             </div>
         </div>
 
@@ -370,6 +370,8 @@
         <p id="user-info" class="text-xs text-gray-500 mt-4 text-center"></p>
     </div>
 
+    
+
     <!-- Kompletter JavaScript-Block (bereinigt & lauffähig) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -380,10 +382,12 @@ import {
   setDoc,
   getDoc,
   getDocs,
-  collectionGroup,
+  query,
+  orderBy,
+  limit,
+  collection,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
   // ----------------------------
@@ -546,20 +550,16 @@ import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-
 }
 
         async function loadGlobalHighscore() {
-
-        if (usingFirebase && firestoreDocRef) {
   try {
-    await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
-
-      try {
     const globalRef = doc(db, 'artifacts', 'memory-app', 'global', 'high_score');
     const snap = await getDoc(globalRef);
-    if (snap?.exists()) {
+    if (snap.exists()) {
       const val = snap.data().maxRound || 0;
       document.getElementById('global-highscore').textContent = val;
       console.log('🌍 Globaler Highscore:', val);
     } else {
       document.getElementById('global-highscore').textContent = 0;
+      console.log("Kein globaler Highscore gefunden.");
     }
   } catch (e) {
     console.error('Fehler beim Laden globalen Highscores:', e);
@@ -1105,6 +1105,7 @@ import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-
 
 
 </html>
+
 
 
 
