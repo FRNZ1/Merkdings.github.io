@@ -453,20 +453,32 @@
                       setupLocalHighscore();
                     }
                 // --- UID prüfen ---
-                /*let savedUid = localStorage.getItem('firebaseAnonUid');
+                let savedUid = localStorage.getItem('firebaseAnonUid');
                 if (savedUid) {
                     console.log("Bestehende UID gefunden:", savedUid);
                       // Trick: Wir tun so, als wäre das unser User — kein Re-Login nötig
                       userId = savedUid;
-                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                      /*firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
                       setupHighScoreListener();
                       updateHighscoreStatus('online');
-                    return;
-                    
-                /*} else {
+                    return;*/   
+                } else {
                       // Noch keine UID -> jetzt anonym anmelden
-                    await signInAnonymously(auth);
-                    onAuthStateChanged(auth, (user) => {
+                    const result = await signInAnonymously(auth);
+                      userId = result.user?.uid;
+                      localStorage.setItem('firebaseAnonUid', userId);
+                      console.log("🆕 Neue UID angelegt:", userId);
+                    }
+
+                firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+
+                    // Highscore einmalig laden
+                    await loadInitialHighscore();
+                
+                    // Listener starten (für Live-Updates)
+                    setupHighScoreListener();
+                        
+                    /*onAuthStateChanged(auth, (user) => {
                     if (user) {
                           userId = user.uid;
                           localStorage.setItem('firebaseAnonUid', userId); // 🔹 Speichere UID dauerhaft
@@ -479,9 +491,9 @@
                           setupLocalHighscore();
                         }
                       });
-                    }
+                    }*/
 
-                    const result = await signInAnonymously(auth);
+                    /*const result = await signInAnonymously(auth);
                     userId = result.user?.uid;
                     if (userId) {
                       localStorage.setItem('firebaseAnonUid', userId);
@@ -493,7 +505,7 @@
                       console.warn("Anonyme Anmeldung lieferte keine UID, fallback zu lokalem Highscore.");
                       usingFirebase = false;
                       setupLocalHighscore();
-                    }
+                    }*/
                     /*localStorage.setItem('firebaseAnonUid', userId);
                 
                     firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
@@ -505,8 +517,27 @@
                 setupLocalHighscore();
               }
             };
-                        
-            // Firestore Highscore-Listener
+
+                // Highscore einmalig laden
+                const loadInitialHighscore = async () => {
+                  try {
+                    const docSnap = await getDoc(firestoreDocRef);
+                    if (docSnap.exists()) {
+                      const data = docSnap.data();
+                      currentHighScore = data.maxRound || 0;
+                      document.getElementById('high-score').textContent = currentHighScore;
+                      console.log("🏆 Initialer Highscore:", currentHighScore);
+                    } else {
+                      document.getElementById('high-score').textContent = 0;
+                      console.log("ℹ️ Kein Highscore gefunden.");
+                    }
+                  } catch (error) {
+                    console.error("Fehler beim Laden des Highscores:", error);
+                    setupLocalHighscore();
+                  }
+                };
+            
+            /*// Firestore Highscore-Listener
             const setupHighScoreListener = () => {
               if (!firestoreDocRef) return;
               onSnapshot(firestoreDocRef, (docSnap) => {
@@ -521,6 +552,21 @@
               }, (error) => {
                 console.error("Fehler beim Highscore-Listener:", error);
                 setupLocalHighscore(); // Fallback, wenn Firestore fehlschlägt
+              });
+            };*/
+
+            // Listener für Live-Updates
+            const setupHighScoreListener = () => {
+              if (!firestoreDocRef) return;
+              onSnapshot(firestoreDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                  const data = docSnap.data();
+                  currentHighScore = data.maxRound || 0;
+                  document.getElementById('high-score').textContent = currentHighScore;
+                }
+              }, (error) => {
+                console.error("Fehler beim Highscore-Listener:", error);
+                setupLocalHighscore();
               });
             };
             
@@ -1142,6 +1188,7 @@
 
 
 </html>
+
 
 
 
