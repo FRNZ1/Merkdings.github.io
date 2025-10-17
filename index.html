@@ -408,33 +408,47 @@
                     auth = getAuth(app);
                     usingFirebase = true;
             
-                // Anonym anmelden
-                /*await signInAnonymously(auth);
-                onAuthStateChanged(auth, (user) => {*/
 
                 const savedUid = localStorage.getItem('firebaseAnonUid');
-if (savedUid) {
-  console.log("Bestehende UID gefunden:", savedUid);
-  userId = savedUid;
-  firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-  
-  await loadInitialHighscore();  // 🔹 Wichtig: lädt den Wert aus Firestore
-  setupHighScoreListener();      // 🔹 Listener für Live-Updates starten
-} else {
-  console.log("Keine UID gefunden, melde anonym an...");
-  const result = await signInAnonymously(auth);
-  userId = result.user?.uid;
-  if (userId) {
-    localStorage.setItem('firebaseAnonUid', userId);
-    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-    await setDoc(firestoreDocRef, { maxRound: 0 }, { merge: true });
-    setupHighScoreListener();
-  } else {
-    console.warn("Anonyme Anmeldung fehlgeschlagen - Local Highscore aktiv");
-    setupLocalHighscore();
-    return;
-  }
-}
+                
+                if (savedUid) {
+                  console.log("Bestehende UID gefunden:", savedUid);
+                  userId = savedUid;
+                  firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                  
+                  await loadInitialHighscore();  // 🔹 Wichtig: lädt den Wert aus Firestore
+                  setupHighScoreListener();      // 🔹 Listener für Live-Updates starten
+                } else {
+                  console.log("Keine UID gefunden, melde anonym an...");
+                  const result = await signInAnonymously(auth);
+                  userId = result.user?.uid;
+                    
+                  if (userId) {
+                    localStorage.setItem('firebaseAnonUid', userId);
+                    firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
+                    await setDoc(firestoreDocRef, { maxRound: 0 }, { merge: true });
+                    setupHighScoreListener();
+                  } else {
+                    console.warn("Anonyme Anmeldung fehlgeschlagen - Local Highscore aktiv");
+                    setupLocalHighscore();
+                    return;
+                  }
+                }
+
+                 // Auth-Überwachung – Session bleibt bestehen
+                onAuthStateChanged(auth, (user) => {
+                  if (user && user.uid) {
+                    console.log("✅ Firebase-Session aktiv:", user.uid);
+                  } else {
+                    console.warn("⚠️ Firebase-Session verloren, verwende gespeicherte UID:", localStorage.getItem('firebaseAnonUid'));
+                  }
+                });
+            
+              } catch (err) {
+                console.error("Fehler bei der Firebase-Initialisierung:", err);
+                setupLocalHighscore();
+              }
+            };
                 
                 /*const savedUid = localStorage.getItem('firebaseAnonUid');
                     if (savedUid) {
@@ -510,21 +524,7 @@ if (savedUid) {
                 
                     // Listener starten (für Live-Updates)
                     //setupHighScoreListener();
-                        
-                    /*onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                          userId = user.uid;
-                          localStorage.setItem('firebaseAnonUid', userId); // 🔹 Speichere UID dauerhaft
-                          firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                          setupHighScoreListener();
-                          updateHighscoreStatus('online');
-                    } else {
-                          console.warn("Anonyme Auth fehlgeschlagen, nutze localStorage.");
-                          usingFirebase = false;
-                          setupLocalHighscore();
-                        }
-                      });
-                    }*/
+                    
 
                     /*const result = await signInAnonymously(auth);
                     userId = result.user?.uid;
@@ -1221,6 +1221,7 @@ if (savedUid) {
 
 
 </html>
+
 
 
 
