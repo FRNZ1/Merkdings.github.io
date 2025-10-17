@@ -366,7 +366,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        //import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Initialisiere globale Variablen
         let app = null;
@@ -463,19 +463,7 @@ if (savedUid) {
                               });*/
                 
                     // --- Noch keine UID → anonym anmelden ---
-                    /*const result = await signInAnonymously(auth);
-                    userId = result.user?.uid;
-                
-                    if (userId) {
-                      localStorage.setItem('firebaseAnonUid', userId);
-                      firestoreDocRef = doc(db, 'artifacts', 'memory-app', 'users', userId, 'memory_game_scores', 'high_score');
-                      setupHighScoreListener();
-                      console.log("Neue UID angelegt:", userId);
-                    } else {
-                      console.warn("Anonyme Anmeldung fehlgeschlagen → nutze Local Highscore");
-                      usingFirebase = false;
-                      setupLocalHighscore();
-                    }*/
+                    
                 // --- UID prüfen ---
                 /*const savedUid = localStorage.getItem('firebaseAnonUid');
                 if (savedUid) {
@@ -1233,6 +1221,7 @@ if (savedUid) {
 
 
 </html>
+
 
 
 
