@@ -374,6 +374,8 @@
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         //import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        let app, db, auth, userId, firestoreDocRef, usingFirebase = false, currentHighScore = 0;
+        
         // Initialisiere globale Variablen
         let app = null;
         let db = null;
@@ -437,20 +439,20 @@
                 
                 userId = localStorage.getItem("firebaseAnonUid");
                 if (!userId) {
-      console.log("Keine UID gefunden → anonym anmelden...");
-      const result = await signInAnonymously(auth);
-      userId = result.user?.uid;
-      localStorage.setItem("firebaseAnonUid", userId);
-    }
-
-    console.log("🔥 Aktive UID:", userId);
-    firestoreDocRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
-
-    // 🔹 Highscore initial laden & anzeigen
-    await loadInitialHighscore();
-
-    // 🔹 Listener aktivieren (für Live-Updates)
-    setupHighScoreListener();
+                  console.log("Keine UID gefunden → anonym anmelden...");
+                  const result = await signInAnonymously(auth);
+                  userId = result.user?.uid;
+                  localStorage.setItem("firebaseAnonUid", userId);
+                }
+            
+                console.log("🔥 Aktive UID:", userId);
+                firestoreDocRef = doc(db, "artifacts", "memory-app", "users", userId, "memory_game_scores", "high_score");
+            
+                // 🔹 Highscore initial laden & anzeigen
+                await loadInitialHighscore();
+            
+                // 🔹 Listener aktivieren (für Live-Updates)
+                setupHighScoreListener();
                 
                 /*if (savedUid) {
                   console.log("Bestehende UID gefunden:", savedUid);
@@ -594,6 +596,121 @@
               }
             };
 
+        async function loadInitialHighscore() {
+    try {
+      const docSnap = await getDoc(firestoreDocRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        currentHighScore = data.maxRound || 0;
+        document.getElementById("high-score").textContent = currentHighScore;
+        console.log("🏆 Initialer Highscore:", currentHighScore);
+      } else {
+        document.getElementById("high-score").textContent = 0;
+        console.log("ℹ️ Kein Highscore gefunden.");
+      }
+    } catch (error) {
+      console.error("Fehler beim Laden des Highscores:", error);
+      setupLocalHighscore();
+    }
+  }
+
+  function setupHighScoreListener() {
+    if (!firestoreDocRef) return;
+    onSnapshot(firestoreDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        currentHighScore = data.maxRound || 0;
+        document.getElementById("high-score").textContent = currentHighScore;
+      }
+    }, (error) => {
+      console.error("Fehler beim Highscore-Listener:", error);
+      setupLocalHighscore();
+    });
+  }
+
+  window.updateHighScore = async (newRound) => {
+    if (newRound <= currentHighScore) return;
+
+    currentHighScore = newRound;
+    document.getElementById("high-score").textContent = newRound;
+
+    if (usingFirebase && firestoreDocRef) {
+      try {
+        await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) {
+        console.error("Fehler beim Schreiben in Firestore:", e);
+        setupLocalHighscore();
+      }
+    } else {
+      localStorage.setItem("localHighScore", newRound);
+    }
+  };
+
+  function setupLocalHighscore() {
+    const saved = parseInt(localStorage.getItem("localHighScore")) || 0;
+    currentHighScore = saved;
+    document.getElementById("high-score").textContent = saved;
+    usingFirebase = false;
+    console.log("💾 Lokaler Highscore aktiv.");
+  }
+        async function loadInitialHighscore() {
+    try {
+      const docSnap = await getDoc(firestoreDocRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        currentHighScore = data.maxRound || 0;
+        document.getElementById("high-score").textContent = currentHighScore;
+        console.log("🏆 Initialer Highscore:", currentHighScore);
+      } else {
+        document.getElementById("high-score").textContent = 0;
+        console.log("ℹ️ Kein Highscore gefunden.");
+      }
+    } catch (error) {
+      console.error("Fehler beim Laden des Highscores:", error);
+      setupLocalHighscore();
+    }
+  }
+
+  function setupHighScoreListener() {
+    if (!firestoreDocRef) return;
+    onSnapshot(firestoreDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        currentHighScore = data.maxRound || 0;
+        document.getElementById("high-score").textContent = currentHighScore;
+      }
+    }, (error) => {
+      console.error("Fehler beim Highscore-Listener:", error);
+      setupLocalHighscore();
+    });
+  }
+
+  window.updateHighScore = async (newRound) => {
+    if (newRound <= currentHighScore) return;
+
+    currentHighScore = newRound;
+    document.getElementById("high-score").textContent = newRound;
+
+    if (usingFirebase && firestoreDocRef) {
+      try {
+        await setDoc(firestoreDocRef, { maxRound: newRound, updatedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) {
+        console.error("Fehler beim Schreiben in Firestore:", e);
+        setupLocalHighscore();
+      }
+    } else {
+      localStorage.setItem("localHighScore", newRound);
+    }
+  };
+
+  function setupLocalHighscore() {
+    const saved = parseInt(localStorage.getItem("localHighScore")) || 0;
+    currentHighScore = saved;
+    document.getElementById("high-score").textContent = saved;
+    usingFirebase = false;
+    console.log("💾 Lokaler Highscore aktiv.");
+  }
+        
                 // Highscore einmalig laden
                 const loadInitialHighscore = async () => {
                   try {
@@ -1265,6 +1382,7 @@
 
 
 </html>
+
 
 
 
